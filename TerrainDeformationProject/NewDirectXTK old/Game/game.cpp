@@ -10,6 +10,8 @@
 #include "DDSTextureLoader.h"
 #include <d3d11shader.h>
 
+#include "HeightMapManager.h"
+
 using namespace DirectX;
 
 Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playTime(0), m_fxFactory(nullptr), m_states(nullptr)
@@ -84,18 +86,16 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	m_DD->m_cam = m_cam;
 	m_DD->m_light = m_light;
 
-	FileVBGO* terrainBox = new FileVBGO("../Assets/terrainTex.txt", _pd3dDevice);
-	m_GameObjects.push_back(terrainBox);
+	m_plane = new VBPlane();
+	m_plane->init(20, 10,5,_pd3dDevice);
+	m_plane->SetScale(4.0f);
+	m_GameObjects.push_back(m_plane);
+
+	HeightMapManager hm = HeightMapManager();
 
 	//add a secondary camera
-	m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, terrainBox, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
+	m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, m_plane, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
 	m_GameObjects.push_back(m_TPScam);
-
-	VBCube* cube = new VBCube();
-	cube->init(11, _pd3dDevice);
-	//cube->SetPos(Vector3(100.0f, 0.0f, 0.0f));
-	//cube->SetScale(4.0f);
-	m_GameObjects.push_back(cube);
 }
 
 Game::~Game()
@@ -157,9 +157,9 @@ bool Game::Update()
 	}
 
 	//lock the cursor to the centre of the window
-	RECT window;
-	GetWindowRect(m_hWnd, &window);
-	SetCursorPos((window.left+window.right)>>1, (window.bottom+window.top)>>1);
+	//RECT window;
+	//GetWindowRect(m_hWnd, &window);
+	//SetCursorPos((window.left+window.right)>>1, (window.bottom+window.top)>>1);
 
 	//upon space bar switch camera state
 	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))

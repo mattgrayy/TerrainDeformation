@@ -46,6 +46,15 @@
     <ClCompile Include="TextGO2D.cpp">
       <Filter>Objects\2D\Source</Filter>
     </ClCompile>
+    <ClCompile Include="VBPlane.cpp">
+      <Filter>Objects\Example VBGOs\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="HeightMapManager.cpp">
+      <Filter>Base\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="EasyBMP.cpp">
+      <Filter>Extras</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h" />
@@ -124,6 +133,24 @@
     <ClInclude Include="TextGO2D.h">
       <Filter>Objects\2D\Headers</Filter>
     </ClInclude>
+    <ClInclude Include="VBPlane.h">
+      <Filter>Objects\Example VBGOs\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="HeightMapManager.h">
+      <Filter>Base\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP.h">
+      <Filter>Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_BMP.h">
+      <Filter>Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_DataStructures.h">
+      <Filter>Extras</Filter>
+    </ClInclude>
+    <ClInclude Include="EasyBMP_VariousBMPutilities.h">
+      <Filter>Extras</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Tutorial01.rc" />
@@ -164,6 +191,9 @@
     </Filter>
     <Filter Include="Objects\2D\Source">
       <UniqueIdentifier>{588be166-e302-4071-bc83-95e22642c942}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Extras">
+      <UniqueIdentifier>{53bc9c9c-8161-48d1-a0eb-2c1dde8e1b96}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
