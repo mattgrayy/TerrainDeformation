@@ -10,6 +10,7 @@
 #include "GameState.h"
 #include "SimpleMath.h"
 #include "camera.h"
+#include "Circle.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
@@ -29,6 +30,6 @@ struct GameData
 
 	HWND* m_hwnd;
 
-	Camera* m_currentCam;
+	Circle* m_Circle;
 };
 #endif

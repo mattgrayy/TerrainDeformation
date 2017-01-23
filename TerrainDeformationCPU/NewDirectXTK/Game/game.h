@@ -29,6 +29,7 @@ struct DrawData2D;
 class Light;
 
 class VBPlane;
+class Circle;
 
 class Game
 {

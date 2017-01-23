@@ -37,18 +37,24 @@ void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 	{
 		for (int j = -(m_height - 1) / 2; j<(m_height - 1) / 2; j++)
 		{
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)j);
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.1f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.1f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.1f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)(j + 1));
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)j);
 
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)j);
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.1f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.1f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.1f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)(j + 1));
-			m_vertices[vert].Color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
+			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
 			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)(j + 1));
 		}
 	}
@@ -88,27 +94,51 @@ void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 
 void VBPlane::Tick(GameData* _GD)
 {
-	if (snowing)
-	{
-		calculateSnowfall();
-	}
+	//if (snowing)
+	//{
+	//	calculateSnowfall();
+	//}
 	
-	if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
+	int closestVertIndex = -1;
+	float closestVertDistance = 300;
+
+	for (int i = 0; i < numVerts; i++)
 	{
-		POINT mousePos;
+		float distance = sqrt(pow(_GD->m_Circle->GetPos().x - m_vertices[i].Pos.x, 2) +
+			pow(_GD->m_Circle->GetPos().z - m_vertices[i].Pos.z, 2));
 
-		GetCursorPos(&mousePos);
-		ScreenToClient(*_GD->m_hwnd, &mousePos);
+		if (distance < _GD->m_Circle->m_radius)
+		{
+			if (distance < closestVertDistance)
+			{
+				closestVertDistance = distance;
+				closestVertIndex = i;
+			}
 
-		int mousex = mousePos.x;
-		int mousey = mousePos.y;
-
-		std::cout << mousePos.x << "-" << mousePos.y << std::endl;
+			m_vertices[i].color = Color(0.5f, 0.5f, 0.0f, 1.0f);
+		}
+		else if(m_vertices[i].color != m_vertices[i].baseColor)
+		{
+			m_vertices[i].color = m_vertices[i].baseColor;
+		}
 	}
 
-	timer += _GD->m_dt;
+	if (closestVertIndex != -1)
+	{
+		if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
+		{
+			moveSphere(false, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+		}
+		if (!(_GD->m_prevMouseState->rgbButtons[1] & 0x80) && _GD->m_mouseState->rgbButtons[1] & 0x80)
+		{
+			moveSphere(true, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+		}
+	}
+
 
 	/*
+	timer += _GD->m_dt;
+
 	if (timer > 2)
 	{
 		if (snowing)
@@ -236,12 +266,12 @@ void VBPlane::calculateSnowfall()
 				continue;
 			}
 
-			m_vertices[i].Color += Color(0.0001f, 0.0001f, 0.0001f, 0.0f);
+			m_vertices[i].baseColor += Color(0.0001f, 0.0001f, 0.0001f, 0.0f);
 			m_vertices[i].Pos += Vector3(0, snowRate, 0);
 		}
 		else
 		{
-			m_vertices[i].Color += Color(0.001f, 0.001f, 0.001f, 0.0f);
+			m_vertices[i].baseColor += Color(0.001f, 0.001f, 0.001f, 0.0f);
 			m_vertices[i].Pos += Vector3(0, snowRate, 0);
 		}
 	}
@@ -271,12 +301,12 @@ void VBPlane::moveSphere(bool _additive, Vector3 _center, float _radius, float _
 
 			if (_additive && displacement > 0)
 			{
-				m_vertices[i].Color += Color(colourChange, colourChange, colourChange, 0.0f);
+				m_vertices[i].baseColor += Color(colourChange, colourChange, colourChange, 0.0f);
 				m_vertices[i].Pos += Vector3(0, displacement, 0);
 			}
 			else if(displacement > 0)
 			{
-				m_vertices[i].Color -= Color(colourChange, colourChange, colourChange, 0.0f);
+				m_vertices[i].baseColor -= Color(colourChange, colourChange, colourChange, 0.0f);
 				m_vertices[i].Pos -= Vector3(0, displacement, 0);
 			}
 		}

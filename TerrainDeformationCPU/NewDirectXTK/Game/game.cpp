@@ -83,6 +83,10 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	m_DD->m_cam = m_cam;
 	m_DD->m_light = m_light;
 
+	Circle* _cir = new Circle();
+	_cir->init(5, _pd3dDevice);
+	m_GD->m_Circle = _cir;
+	m_GameObjects.push_back(_cir);
 
 	m_plane = new VBPlane();
 	m_plane->init(60, 60, _pd3dDevice);
@@ -97,8 +101,6 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	//add a secondary camera
 	m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, m_plane, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
 	m_GameObjects.push_back(m_TPScam);
-
-	m_GD->m_currentCam = m_cam;
 }
 
 Game::~Game()
@@ -187,6 +189,9 @@ bool Game::Update()
 		(*it)->Tick(m_GD);
 	}
 
+	RECT window;
+	GetWindowRect(m_hWnd, &window);
+	SetCursorPos(0.5*(window.left + window.right), 0.5*(window.bottom + window.top));
 	return true;
 }
 

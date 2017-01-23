@@ -354,6 +354,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="camera.cpp" />
+    <ClCompile Include="Circle.cpp" />
     <ClCompile Include="CMOGO.cpp" />
     <ClCompile Include="fileVBGO.cpp" />
     <ClCompile Include="game.cpp" />
@@ -363,7 +364,6 @@
     <ClCompile Include="ImageGO2D.cpp" />
     <ClCompile Include="light.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Player.cpp" />
     <ClCompile Include="TextGO2D.cpp" />
     <ClCompile Include="TPSCamera.cpp" />
     <ClCompile Include="VBGO.cpp" />
@@ -372,6 +372,7 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="camera.h" />
+    <ClInclude Include="Circle.h" />
     <ClInclude Include="CMOGO.h" />
     <ClInclude Include="ConstantBuffer.h" />
     <ClInclude Include="drawdata.h" />
@@ -386,7 +387,6 @@
     <ClInclude Include="ImageGO2D.h" />
     <ClInclude Include="light.h" />
     <ClInclude Include="ObjectList.h" />
-    <ClInclude Include="Player.h" />
     <ClInclude Include="TextGO2D.h" />
     <CLInclude Include="resource.h" />
     <ClInclude Include="TPSCamera.h" />

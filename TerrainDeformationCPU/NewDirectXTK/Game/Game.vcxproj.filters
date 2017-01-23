@@ -43,7 +43,7 @@
     <ClCompile Include="VBPlane.cpp">
       <Filter>Objects\Source</Filter>
     </ClCompile>
-    <ClCompile Include="Player.cpp">
+    <ClCompile Include="Circle.cpp">
       <Filter>Objects\Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -112,7 +112,7 @@
     <ClInclude Include="VBPlane.h">
       <Filter>Objects\Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Player.h">
+    <ClInclude Include="Circle.h">
       <Filter>Objects\Headers</Filter>
     </ClInclude>
   </ItemGroup>

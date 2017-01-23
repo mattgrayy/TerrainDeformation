@@ -62,14 +62,14 @@ FileVBGO::FileVBGO(string _fileName, ID3D11Device* _GD)
 		if (m_texCoords)
 		{
 			meshFile >> vertices[i].texCoord.x >> vertices[i].texCoord.y;
-			vertices[i].Color = Color(1.0f, 1.0f, 1.0f, 1.0f);
+			vertices[i].color = Color(1.0f, 1.0f, 1.0f, 1.0f);
 		}
 
 		if (m_colour)
 		{
 			float R, G, B, A;
 			meshFile >> R >> G >> B >> A;
-			vertices[i].Color = Color(R, G, B, A);
+			vertices[i].color = Color(R, G, B, A);
 			vertices[i].texCoord = Vector2::One;
 		}
 	}

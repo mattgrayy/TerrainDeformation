@@ -11,8 +11,7 @@
 #include "fileVBGO.h"
 #include "light.h"
 
-#include "Player.h"
-
+#include "Circle.h"
 
 
 //and 2-D ones here
