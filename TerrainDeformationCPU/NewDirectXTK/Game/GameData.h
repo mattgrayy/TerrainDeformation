@@ -9,6 +9,7 @@
 #include "Mouse.h"
 #include "GameState.h"
 #include "SimpleMath.h"
+#include "camera.h"
 
 using namespace DirectX;
 using namespace SimpleMath;
@@ -27,5 +28,7 @@ struct GameData
 	DIMOUSESTATE* m_prevMouseState; //previous state of the mouse
 
 	HWND* m_hwnd;
+
+	Camera* m_currentCam;
 };
 #endif

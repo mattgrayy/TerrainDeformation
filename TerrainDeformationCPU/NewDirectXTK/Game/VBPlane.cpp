@@ -92,9 +92,23 @@ void VBPlane::Tick(GameData* _GD)
 	{
 		calculateSnowfall();
 	}
+	
+	if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
+	{
+		POINT mousePos;
+
+		GetCursorPos(&mousePos);
+		ScreenToClient(*_GD->m_hwnd, &mousePos);
+
+		int mousex = mousePos.x;
+		int mousey = mousePos.y;
+
+		std::cout << mousePos.x << "-" << mousePos.y << std::endl;
+	}
 
 	timer += _GD->m_dt;
 
+	/*
 	if (timer > 2)
 	{
 		if (snowing)
@@ -107,10 +121,10 @@ void VBPlane::Tick(GameData* _GD)
 		{
 
 			rndSnow = rand() % (5 - 1 + 1) + 1;
-			float newSnowRate = rndSnow/1000;
-
+			float newSnowRate = rndSnow / 50;
+			
 			std::vector<Vector2> bounds;
-
+			
 			float rndBoundx = rand() % (0 - -20 + 1) + -20;
 			float rndBoundy = rand() % (0 - -20 + 1) + -20;
 			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
@@ -134,7 +148,7 @@ void VBPlane::Tick(GameData* _GD)
 			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
 
 			std::cout << rndBoundx << " - " << rndBoundy;
-
+			
 
 			toggleSnow(true, newSnowRate, bounds);
 			timer = -5;
@@ -162,7 +176,7 @@ void VBPlane::Tick(GameData* _GD)
 
 		moveSphere(false, m_vertices[rndPoint].Pos, rndRadius, rndHeight);
 	}
-
+	*/
 	VBGO::Tick(_GD);
 }
 
@@ -187,8 +201,6 @@ void VBPlane::toggleSnow(bool onOrOff, float valuePerTick, std::vector<Vector2> 
 
 	snowing = onOrOff;
 	snowRate = valuePerTick;
-
-	std::cout << "Toggled Snow";
 }
 
 void VBPlane::calculateSnowfall()
@@ -205,25 +217,33 @@ void VBPlane::calculateSnowfall()
 
 	for (int i = 0; i < numVerts; i++)
 	{
-		if (m_vertices[i].Pos.x < m_snowBounds[0].x || m_vertices[i].Pos.y < m_snowBounds[0].y)
+		if (hasBounds)
 		{
-			continue;
-		}
-		if (m_vertices[i].Pos.x > m_snowBounds[1].x || m_vertices[i].Pos.y < m_snowBounds[1].y)
-		{
-			continue;
-		}
-		if (m_vertices[i].Pos.x > m_snowBounds[2].x || m_vertices[i].Pos.y > m_snowBounds[2].y)
-		{
-			continue;
-		}
-		if (m_vertices[i].Pos.x < m_snowBounds[3].x || m_vertices[i].Pos.y > m_snowBounds[3].y)
-		{
-			continue;
-		}
+			if (m_vertices[i].Pos.x < m_snowBounds[0].x || m_vertices[i].Pos.y < m_snowBounds[0].y)
+			{
+				continue;
+			}
+			if (m_vertices[i].Pos.x > m_snowBounds[1].x || m_vertices[i].Pos.y < m_snowBounds[1].y)
+			{
+				continue;
+			}
+			if (m_vertices[i].Pos.x > m_snowBounds[2].x || m_vertices[i].Pos.y > m_snowBounds[2].y)
+			{
+				continue;
+			}
+			if (m_vertices[i].Pos.x < m_snowBounds[3].x || m_vertices[i].Pos.y > m_snowBounds[3].y)
+			{
+				continue;
+			}
 
-		m_vertices[i].Color += Color(0.0001f, 0.0001f, 0.0001f, 0.0f);
-		m_vertices[i].Pos += Vector3(0, snowRate, 0);
+			m_vertices[i].Color += Color(0.0001f, 0.0001f, 0.0001f, 0.0f);
+			m_vertices[i].Pos += Vector3(0, snowRate, 0);
+		}
+		else
+		{
+			m_vertices[i].Color += Color(0.001f, 0.001f, 0.001f, 0.0f);
+			m_vertices[i].Pos += Vector3(0, snowRate, 0);
+		}
 	}
 }
 
@@ -238,7 +258,7 @@ void VBPlane::moveSphere(bool _additive, Vector3 _center, float _radius, float _
 		if (distance < (_radius * _radius))
 		{
 			float displacement = _maxDisplacement - ((_maxDisplacement / _radius) * distance);
-			float colourChange = 0.05f - ((0.05f / _radius) * distance);
+			float colourChange = 0.1f - ((0.1f / _radius) * distance);
 
 			if (displacement < 0)
 			{
