@@ -15,6 +15,12 @@ public:
 	VBPlane(){};
 	virtual ~VBPlane(){};
 
+	struct HeightMapInfo {        // Heightmap structure
+		int terrainWidth;        // Width of heightmap
+		int terrainHeight;        // Height (Length) of heightmap
+		XMFLOAT3 *heightMap;    // Array to store terrain's vertex positions
+	};
+
 	//initialise the Veretx and Index buffers for the Plane
 	void init(int _width, int _height, ID3D11Device* GD);
 	virtual void Tick(GameData* _GD);
@@ -24,6 +30,8 @@ public:
 	void calculateSnowfall();
 
 	void moveSphere(bool _additive, Vector3 _center, float _radius, float _maxDisplacement);
+
+	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
 
 protected:
 	//this is to allow custom versions of this which create the basic Plane and then distort it

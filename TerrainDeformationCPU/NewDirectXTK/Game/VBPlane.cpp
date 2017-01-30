@@ -5,77 +5,142 @@
 
 void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 {
-
-	m_width = _width;
-	if (m_width != 00 && m_width % 2 == 0)
+	HeightMapInfo hmInfo;
+	if (loadHeightMap("heightmap.bmp", hmInfo))
 	{
-		m_width--;
+		std::cout << "YESS!";
+		m_width = hmInfo.terrainWidth;
+		m_height = hmInfo.terrainWidth;
+	}
+	else
+	{
+		m_width = 2;
+		m_height = 2;
+		std::cout << "NOOO!";
 	}
 
-	m_height = _height;
-	if (m_height != 00 && m_height % 2 == 0)
-	{
-		m_height--;
-	}
-
-	//calculate number of vertices and primatives
-	numVerts = 6 * (m_width - 1) * (m_height - 1);
-	m_numPrims = numVerts / 3;
+	numVerts = m_width * m_height;
+	m_numPrims = (m_width - 1)*(m_height - 1) * 2;
 	m_vertices = new myVertex[numVerts];
-	WORD* indices = new WORD[numVerts];
+	WORD* indices = new WORD[m_numPrims * 3];
 
 	//as using the standard VB shader set the tex-coords somewhere safe
 	for (int i = 0; i<numVerts; i++)
 	{
 		indices[i] = i;
+		m_vertices[i].Pos = Vector3(hmInfo.heightMap[i].x - m_width/2, hmInfo.heightMap[i].y - 25, hmInfo.heightMap[i].z - m_height / 2);
+		m_vertices[i].baseColor = Color(0.0f, hmInfo.heightMap[i].y / 10, 1.0f, 1.0f);
 		m_vertices[i].texCoord = Vector2::One;
 	}
 
-	//in each loop create the two traingles for the matching sub-square on each of the six faces
-	int vert = 0;
-	for (int i = -(m_width - 1) / 2; i<(m_width - 1) / 2; i++)
+	int k = 0;
+	int texUIndex = 0;
+	int texVIndex = 0;
+	for (DWORD i = 0; i < m_width - 1; i++)
 	{
-		for (int j = -(m_height - 1) / 2; j<(m_height - 1) / 2; j++)
+		for (DWORD j = 0; j < m_height - 1; j++)
 		{
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)j);
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.1f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.1f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)(j + 1));
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)j);
+			indices[k] = i* m_height + j;        // Bottom left of quad
+			m_vertices[i*m_height + j].texCoord = Vector2(texUIndex + 0.0f, texVIndex + 1.0f);
 
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)j);
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.1f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.1f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)i, 0.0f, (float)(j + 1));
-			m_vertices[vert].color = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert].baseColor = Color(0.0f, 0.5f, 0.0f, 1.0f);
-			m_vertices[vert++].Pos = Vector3((float)(i + 1), 0.0f, (float)(j + 1));
+			indices[k + 1] = i*m_height + j + 1;        // Bottom right of quad
+			m_vertices[i*m_height + j + 1].texCoord = Vector2(texUIndex + 1.0f, texVIndex + 1.0f);
+
+			indices[k + 2] = (i + 1)*m_height + j;    // Top left of quad
+			m_vertices[(i + 1)*m_height + j].texCoord = Vector2(texUIndex + 0.0f, texVIndex + 0.0f);
+
+
+			indices[k + 3] = (i + 1)*m_height + j;    // Top left of quad
+			m_vertices[(i + 1)*m_height + j].texCoord = Vector2(texUIndex + 0.0f, texVIndex + 0.0f);
+
+			indices[k + 4] = i*m_height + j + 1;        // Bottom right of quad
+			m_vertices[i*m_height + j + 1].texCoord = Vector2(texUIndex + 1.0f, texVIndex + 1.0f);
+
+			indices[k + 5] = (i + 1)*m_height + j + 1;    // Top right of quad
+			m_vertices[(i + 1)*m_height + j + 1].texCoord = Vector2(texUIndex + 1.0f, texVIndex + 0.0f);
+
+			k += 6; // next quad
+
+			texUIndex++;
 		}
+		texUIndex = 0;
+		texVIndex++;
+	}
+	
+	//////////////////////Compute Normals///////////////////////////
+	//Now we will compute the normals for each vertex using normal averaging
+	std::vector<XMFLOAT3> tempNormal;
+
+	//normalized and unnormalized normals
+	XMFLOAT3 unnormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	//Used to get vectors (sides) from the position of the verts
+	float vecX, vecY, vecZ;
+
+	//Two edges of our triangle
+	XMVECTOR edge1 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR edge2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
+	//Compute face normals
+	for (int i = 0; i < m_numPrims; ++i)
+	{
+		//Get the vector describing one edge of our triangle (edge 0,2)
+		vecX = m_vertices[indices[(i * 3)]].Pos.x - m_vertices[indices[(i * 3) + 2]].Pos.x;
+		vecY = m_vertices[indices[(i * 3)]].Pos.y - m_vertices[indices[(i * 3) + 2]].Pos.y;
+		vecZ = m_vertices[indices[(i * 3)]].Pos.z - m_vertices[indices[(i * 3) + 2]].Pos.z;
+		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our first edge
+
+														//Get the vector describing another edge of our triangle (edge 2,1)
+		vecX = m_vertices[indices[(i * 3) + 2]].Pos.x - m_vertices[indices[(i * 3) + 1]].Pos.x;
+		vecY = m_vertices[indices[(i * 3) + 2]].Pos.y - m_vertices[indices[(i * 3) + 1]].Pos.y;
+		vecZ = m_vertices[indices[(i * 3) + 2]].Pos.z - m_vertices[indices[(i * 3) + 1]].Pos.z;
+		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our second edge
+
+														//Cross multiply the two edge vectors to get the un-normalized face normal
+		DirectX::XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
+		tempNormal.push_back(unnormalized);            //Save unormalized normal (for normal averaging)
 	}
 
-	//calculate the normals for the basic lighting in the base shader
-	for (int i = 0; i<m_numPrims; i++)
+	//Compute vertex normals (normal Averaging)
+	XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	int facesUsing = 0;
+	float tX;
+	float tY;
+	float tZ;
+
+	//Go through each vertex
+	for (int i = 0; i < numVerts; ++i)
 	{
-		WORD V1 = 3 * i;
-		WORD V2 = 3 * i + 1;
-		WORD V3 = 3 * i + 2;
+		//Check which triangles use this vertex
+		for (int j = 0; j < m_numPrims; ++j)
+		{
+			if (indices[j * 3] == i ||
+				indices[(j * 3) + 1] == i ||
+				indices[(j * 3) + 2] == i)
+			{
+				tX = XMVectorGetX(normalSum) + tempNormal[j].x;
+				tY = XMVectorGetY(normalSum) + tempNormal[j].y;
+				tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
 
-		//build normals
-		Vector3 norm;
-		Vector3 vec1 = m_vertices[V1].Pos - m_vertices[V2].Pos;
-		Vector3 vec2 = m_vertices[V3].Pos - m_vertices[V2].Pos;
-		norm = vec1.Cross(vec2);
-		norm.Normalize();
+				normalSum = XMVectorSet(tX, tY, tZ, 0.0f);    //If a face is using the vertex, add the unormalized face normal to the normalSum
+				facesUsing++;
+			}
+		}
 
-		m_vertices[V1].Norm = norm;
-		m_vertices[V2].Norm = norm;
-		m_vertices[V3].Norm = norm;
+		//Get the actual normal by dividing the normalSum by the number of faces sharing the vertex
+		normalSum = normalSum / facesUsing;
+
+		//Normalize the normalSum vector
+		normalSum = XMVector3Normalize(normalSum);
+
+		//Store the normal in our current vertex
+		m_vertices[i].Norm.x = XMVectorGetX(normalSum) + m_vertices[i].Pos.x;
+		m_vertices[i].Norm.y = XMVectorGetY(normalSum) + m_vertices[i].Pos.y;
+		m_vertices[i].Norm.z = XMVectorGetZ(normalSum) + m_vertices[i].Pos.z;
+
+		//Clear normalSum and facesUsing for next vertex
+		normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		facesUsing = 0;
 	}
 
 	BuildIB(GD, indices);
@@ -94,11 +159,6 @@ void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 
 void VBPlane::Tick(GameData* _GD)
 {
-	//if (snowing)
-	//{
-	//	calculateSnowfall();
-	//}
-	
 	int closestVertIndex = -1;
 	float closestVertDistance = 300;
 
@@ -135,78 +195,6 @@ void VBPlane::Tick(GameData* _GD)
 		}
 	}
 
-
-	/*
-	timer += _GD->m_dt;
-
-	if (timer > 2)
-	{
-		if (snowing)
-		{
-			snowing = false;
-		}
-
-		int rndSnow = rand() % (5 - 0 + 1) + 0;
-		if (rndSnow == 1)
-		{
-
-			rndSnow = rand() % (5 - 1 + 1) + 1;
-			float newSnowRate = rndSnow / 50;
-			
-			std::vector<Vector2> bounds;
-			
-			float rndBoundx = rand() % (0 - -20 + 1) + -20;
-			float rndBoundy = rand() % (0 - -20 + 1) + -20;
-			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
-
-			std::cout << rndBoundx << " - " << rndBoundy;
-
-			rndBoundx = rand() % (20 - 0 + 1) + 0;
-			rndBoundy = rand() % (0 - -20 + 1) + -20;
-			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
-
-			std::cout << rndBoundx << " - " << rndBoundy;
-
-			rndBoundx = rand() % (20 - 0 + 1) + 0;
-			rndBoundy = rand() % (20 - 0 + 1) + 0;
-			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
-
-			std::cout << rndBoundx << " - " << rndBoundy;
-
-			rndBoundx = rand() % (0 - -20 + 1) + -20;
-			rndBoundy = rand() % (20 - 0 + 1) + 0;
-			bounds.push_back(Vector2(m_pos.x + rndBoundx, m_pos.y + rndBoundy));
-
-			std::cout << rndBoundx << " - " << rndBoundy;
-			
-
-			toggleSnow(true, newSnowRate, bounds);
-			timer = -5;
-		}
-		else
-		{
-			timer = 0;
-		}
-
-		int rndPoint = rand() % (numVerts - 0 + 1) + 0;
-		float rndRadius = rand() % (20 - 5 + 1) + 5;
-		float rndHeight = rand() % (3 - 1 + 1) + 1;
-
-		moveSphere(true, m_vertices[rndPoint].Pos, rndRadius, rndHeight);
-
-		rndPoint = rand() % (numVerts - 0 + 1) + 0;
-		rndRadius = rand() % (20 - 5 + 1) + 5;
-		rndHeight = rand() % (3 - 1 + 1) + 1;
-
-		moveSphere(false, m_vertices[rndPoint].Pos, rndRadius, rndHeight);
-
-		rndPoint = rand() % (numVerts - 0 + 1) + 0;
-		rndRadius = rand() % (20 - 5 + 1) + 5;
-		rndHeight = rand() % (3 - 1 + 1) + 1;
-
-		moveSphere(false, m_vertices[rndPoint].Pos, rndRadius, rndHeight);
-	}
-	*/
 	VBGO::Tick(_GD);
 }
 
@@ -317,7 +305,80 @@ void VBPlane::Draw(DrawData* _DD)
 {
 	D3D11_MAPPED_SUBRESOURCE resource;
 	_DD->m_pd3dImmediateContext->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-	memcpy(resource.pData, m_vertices, sizeof(myVertex) * 6 * (m_width - 1) * (m_height - 1));
+	memcpy(resource.pData, m_vertices, sizeof(myVertex) * m_width * m_height);
 	_DD->m_pd3dImmediateContext->Unmap(m_VertexBuffer, 0);
 	VBGO::Draw(_DD);
+}
+
+
+bool VBPlane::loadHeightMap(char* filename, HeightMapInfo &hminfo)
+{
+	FILE *filePtr;                            // Point to the current position in the file
+	BITMAPFILEHEADER bitmapFileHeader;        // Structure which stores information about file
+	BITMAPINFOHEADER bitmapInfoHeader;        // Structure which stores information about image
+	int imageSize, index;
+	unsigned char height;
+
+	// Open the file
+	filePtr = fopen(filename, "rb");
+	if (filePtr == NULL)
+		return 0;
+
+	// Read bitmaps header
+	fread(&bitmapFileHeader, sizeof(BITMAPFILEHEADER), 1, filePtr);
+
+	// Read the info header
+	fread(&bitmapInfoHeader, sizeof(BITMAPINFOHEADER), 1, filePtr);
+
+	// Get the width and height (width and length) of the image
+	hminfo.terrainWidth = bitmapInfoHeader.biWidth;
+	hminfo.terrainHeight = bitmapInfoHeader.biHeight;
+
+	// Size of the image in bytes. the 3 represents RBG (byte, byte, byte) for each pixel
+	imageSize = hminfo.terrainWidth * hminfo.terrainHeight * 3;
+
+	// Initialize the array which stores the image data
+	unsigned char* bitmapImage = new unsigned char[imageSize];
+
+	// Set the file pointer to the beginning of the image data
+	fseek(filePtr, bitmapFileHeader.bfOffBits, SEEK_SET);
+
+	// Store image data in bitmapImage
+	fread(bitmapImage, 1, imageSize, filePtr);
+
+	// Close file
+	fclose(filePtr);
+
+	// Initialize the heightMap array (stores the vertices of our terrain)
+	hminfo.heightMap = new XMFLOAT3[hminfo.terrainWidth * hminfo.terrainHeight];
+
+	// We use a greyscale image, so all 3 rgb values are the same, but we only need one for the height
+	// So we use this counter to skip the next two components in the image data (we read R, then skip BG)
+	int k = 0;
+
+	// We divide the height by this number to "water down" the terrains height, otherwise the terrain will
+	// appear to be "spikey" and not so smooth.
+	float heightFactor = 10.0f;
+
+	// Read the image data into our heightMap array
+	for (int j = 0; j< hminfo.terrainHeight; j++)
+	{
+		for (int i = 0; i< hminfo.terrainWidth; i++)
+		{
+			height = bitmapImage[k];
+
+			index = (hminfo.terrainHeight * j) + i;
+
+			hminfo.heightMap[index].x = (float)i;
+			hminfo.heightMap[index].y = (float)height / heightFactor;
+			hminfo.heightMap[index].z = (float)j;
+
+			k += 3;
+		}
+	}
+
+	delete[] bitmapImage;
+	bitmapImage = 0;
+
+	return true;
 }
