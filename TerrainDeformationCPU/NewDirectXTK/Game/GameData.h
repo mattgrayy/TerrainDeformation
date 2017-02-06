@@ -21,6 +21,7 @@ struct GameData
 	GameState m_GS; //global GameState
 
 	ID3D11Device* m_pd3dDevice;
+	ID3D11DeviceContext* m_ImmediateContext;
 
 	//player input
 	unsigned char* m_keyboardState; //current state of the Keyboard

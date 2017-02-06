@@ -3,6 +3,8 @@
 #include "VBGO.h"
 #include "vertex.h"
 #include "drawdata.h"
+#include "DrawData2D.h"
+#include "RenderTarget.h"
 #include <vector>
 
 //=================================================================
@@ -22,12 +24,15 @@ public:
 	};
 
 	//initialise the Veretx and Index buffers for the Plane
-	void init(int _width, int _height, ID3D11Device* GD);
+	void init(ID3D11Device* GD);
 	virtual void Tick(GameData* _GD);
 	virtual void Draw(DrawData* _DD);
 
-	void toggleSnow(bool onOrOff, float valuePerTick, std::vector<Vector2> _bounds);
-	void calculateSnowfall();
+	void DrawRenderTarget(DrawData2D* _DD, GameData* _GD);
+	void DrawTerrainElements(DrawData2D* _DD, GameData* _GD);
+	void updateVerts();
+
+	void MakeHole(const Vector2& pos, const float& radius);
 
 	void moveSphere(bool _additive, Vector3 _center, float _radius, float _maxDisplacement);
 
@@ -38,23 +43,18 @@ protected:
 	//see VBSpiral, VBSpiked and VBPillow
 	virtual void Transform(){};
 
-	float m_minY;
-	float m_maxY;
-
-	// snow Variables
-	bool snowing = false;
-	float snowRate = 0.003f;
-	std::vector<Vector2> m_snowBounds;
-
-	//temp
-	float timer = 0;
-
-
 	int m_width;
 	int m_height;
 
+	ID3D11ShaderResourceView* m_heightMap;
+	ID3D11ShaderResourceView* m_circleTex;
+	Vector2 m_circleSize;
+	std::vector<std::pair<const Vector2, const float>> m_holes;
+
 	int numVerts;
 	myVertex* m_vertices;
+	RenderTarget* m_renderTarget;
+
 };
 
 #endif

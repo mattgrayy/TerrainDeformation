@@ -79,6 +79,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	//create DrawData struct and populate its pointers
 	m_DD = new DrawData;
 	m_DD->m_pd3dImmediateContext = nullptr;
+	m_GD->m_ImmediateContext = pd3dImmediateContext;
 	m_DD->m_states = m_states;
 	m_DD->m_cam = m_cam;
 	m_DD->m_light = m_light;
@@ -89,9 +90,10 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	m_GameObjects.push_back(_cir);
 
 	m_plane = new VBPlane();
-	m_plane->init(60, 60, _pd3dDevice);
+	m_plane->init(_pd3dDevice);
 	m_plane->SetScale(4.0f);
 	m_GameObjects.push_back(m_plane);
+	m_plane->DrawRenderTarget(m_DD2D, m_GD);
 
 	//create a base camera
 	m_cam = new Camera(0.25f * XM_PI, AR, 1.0f, 10000.0f, Vector3::UnitY, Vector3::Zero);
@@ -215,6 +217,8 @@ void Game::Render(ID3D11DeviceContext* _pd3dImmediateContext)
 	{
 		(*it)->Draw(m_DD);
 	}
+
+	m_plane->DrawTerrainElements(m_DD2D, m_GD);
 
 	// Draw sprite batch stuff 
 	m_DD2D->m_Sprites->Begin();

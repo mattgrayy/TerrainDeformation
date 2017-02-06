@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include "GameData.h"
+#include "WICTextureLoader.h"
+#include "helper.h"
 
-void VBPlane::init(int _width, int _height, ID3D11Device* GD)
+void VBPlane::init(ID3D11Device* GD)
 {
 	HeightMapInfo hmInfo;
 	if (loadHeightMap("heightmap.bmp", hmInfo))
@@ -18,6 +20,26 @@ void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 		m_height = 2;
 		std::cout << "NOOO!";
 	}
+
+
+	string fullfilename = "heightmap.bmp";
+	HRESULT hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_heightMap);
+
+
+	fullfilename = "Explosion.png";
+	hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_circleTex);
+	//this nasty thing is required to find out the size of this image!
+	ID3D11Resource *pResource;
+	D3D11_TEXTURE2D_DESC Desc;
+	m_circleTex->GetResource(&pResource);
+	((ID3D11Texture2D *)pResource)->GetDesc(&Desc);
+
+	m_circleSize.x = Desc.Width;
+	m_circleSize.y = Desc.Height;
+
+
+
+	m_renderTarget = new RenderTarget(GD, m_width, m_height);
 
 	numVerts = m_width * m_height;
 	m_numPrims = (m_width - 1)*(m_height - 1) * 2;
@@ -145,16 +167,6 @@ void VBPlane::init(int _width, int _height, ID3D11Device* GD)
 
 	BuildIB(GD, indices);
 	BuildVB(GD, numVerts, m_vertices);
-
-	m_minY = m_vertices[0].Pos.y;
-	m_maxY = m_vertices[0].Pos.y + 5;
-
-
-	m_snowBounds.clear();
-	m_snowBounds.push_back(Vector2(0, 0));
-	m_snowBounds.push_back(Vector2(0, 0));
-	m_snowBounds.push_back(Vector2(0, 0));
-	m_snowBounds.push_back(Vector2(0, 0));
 }
 
 void VBPlane::Tick(GameData* _GD)
@@ -187,82 +199,84 @@ void VBPlane::Tick(GameData* _GD)
 	{
 		if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
 		{
-			moveSphere(false, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+			//moveSphere(false, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+			MakeHole(Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius);
 		}
 		if (!(_GD->m_prevMouseState->rgbButtons[1] & 0x80) && _GD->m_mouseState->rgbButtons[1] & 0x80)
 		{
-			moveSphere(true, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+			//moveSphere(true, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
 		}
 	}
+
+	updateVerts();
 
 	VBGO::Tick(_GD);
 }
 
-void VBPlane::toggleSnow(bool onOrOff, float valuePerTick, std::vector<Vector2> _bounds)
+void VBPlane::DrawRenderTarget(DrawData2D* _DD, GameData* _GD)
 {
-	if (_bounds.size() != 4)
-	{
-		m_snowBounds.clear();
-		m_snowBounds.push_back(Vector2(0, 0));
-		m_snowBounds.push_back(Vector2(0, 0));
-		m_snowBounds.push_back(Vector2(0, 0));
-		m_snowBounds.push_back(Vector2(0, 0));
-	}
-	else
-	{
-		m_snowBounds.clear();
-		for (int i = 0; i < _bounds.size(); i++)
-		{
-			m_snowBounds.push_back(_bounds[i]);
-		}
-	}
+	m_renderTarget->Begin(_GD->m_ImmediateContext, false);
 
-	snowing = onOrOff;
-	snowRate = valuePerTick;
+	_DD->m_Sprites->Begin();
+
+	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 1.0f, 1.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One, SpriteEffects_None);
+
+	_DD->m_Sprites->End();
+
+	m_renderTarget->End(_GD->m_ImmediateContext);
+
+	m_renderTarget->Map(_GD->m_ImmediateContext);
 }
 
-void VBPlane::calculateSnowfall()
+void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 {
-	bool hasBounds = false;
-	for (int i = 0; i < m_snowBounds.size() - 1; i++)
+	if (m_holes.size() > 0)
 	{
-		if (m_snowBounds[i] != Vector2(0,0))
+		//Unmap
+		m_renderTarget->Unmap(_GD->m_ImmediateContext);
+
+		//Begin render target
+		m_renderTarget->Begin(_GD->m_ImmediateContext, true);
+
+		if (m_holes.size() > 0)
 		{
-			hasBounds = true;
-			break;
+			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
+			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigBlend());
+
+			for (auto it = m_holes.begin(); it != m_holes.end(); ++it)
+			{
+				//draw
+				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 1, 1, 0.5), 0, m_circleSize * 0.5f, Vector2(1, 1) * it->second / m_circleSize.x, SpriteEffects_None);
+			}
+			m_holes.clear();
+
+			//end sprites
+			_DD->m_Sprites->End();
+		}
+
+		//end render target
+		m_renderTarget->End(_GD->m_ImmediateContext);
+
+		//remap
+		m_renderTarget->Map(_GD->m_ImmediateContext);
+	}
+}
+
+void VBPlane::updateVerts()
+{
+	for (int i = 0; i < m_width; i++)
+	{
+		for (int j = 0; j < m_height; j++)
+		{
+			Color* color = m_renderTarget->GetPixel(i, (j*m_width));
+			m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->y * 20, m_vertices[(j * m_width) + i].Pos.z);
 		}
 	}
+}
 
-	for (int i = 0; i < numVerts; i++)
-	{
-		if (hasBounds)
-		{
-			if (m_vertices[i].Pos.x < m_snowBounds[0].x || m_vertices[i].Pos.y < m_snowBounds[0].y)
-			{
-				continue;
-			}
-			if (m_vertices[i].Pos.x > m_snowBounds[1].x || m_vertices[i].Pos.y < m_snowBounds[1].y)
-			{
-				continue;
-			}
-			if (m_vertices[i].Pos.x > m_snowBounds[2].x || m_vertices[i].Pos.y > m_snowBounds[2].y)
-			{
-				continue;
-			}
-			if (m_vertices[i].Pos.x < m_snowBounds[3].x || m_vertices[i].Pos.y > m_snowBounds[3].y)
-			{
-				continue;
-			}
-
-			m_vertices[i].baseColor += Color(0.0001f, 0.0001f, 0.0001f, 0.0f);
-			m_vertices[i].Pos += Vector3(0, snowRate, 0);
-		}
-		else
-		{
-			m_vertices[i].baseColor += Color(0.001f, 0.001f, 0.001f, 0.0f);
-			m_vertices[i].Pos += Vector3(0, snowRate, 0);
-		}
-	}
+void VBPlane::MakeHole(const Vector2& pos, const float& radius)
+{
+	m_holes.push_back(std::pair<Vector2, float>(pos, radius));
 }
 
 void VBPlane::moveSphere(bool _additive, Vector3 _center, float _radius, float _maxDisplacement)

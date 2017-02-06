@@ -46,6 +46,9 @@
     <ClCompile Include="Circle.cpp">
       <Filter>Objects\Source</Filter>
     </ClCompile>
+    <ClCompile Include="RenderTarget.cpp">
+      <Filter>Objects\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CLInclude Include="resource.h" />
@@ -113,6 +116,9 @@
       <Filter>Objects\Headers</Filter>
     </ClInclude>
     <ClInclude Include="Circle.h">
+      <Filter>Objects\Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderTarget.h">
       <Filter>Objects\Headers</Filter>
     </ClInclude>
   </ItemGroup>
