@@ -50,8 +50,8 @@ void VBPlane::init(ID3D11Device* GD)
 	for (int i = 0; i<numVerts; i++)
 	{
 		indices[i] = i;
-		m_vertices[i].Pos = Vector3(hmInfo.heightMap[i].x - m_width/2, hmInfo.heightMap[i].y - 25, hmInfo.heightMap[i].z - m_height / 2);
-		m_vertices[i].baseColor = Color(0.0f, hmInfo.heightMap[i].y / 10, 1.0f, 1.0f);
+		m_vertices[i].Pos = Vector3(hmInfo.heightMap[i].x, hmInfo.heightMap[i].y - 25, hmInfo.heightMap[i].z);
+		m_vertices[i].baseColor = Color(0.0f,0.3f, 1.0f, 1.0f);
 		m_vertices[i].texCoord = Vector2::One;
 	}
 
@@ -199,7 +199,6 @@ void VBPlane::Tick(GameData* _GD)
 	{
 		if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
 		{
-			//moveSphere(false, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
 			MakeHole(Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius);
 		}
 		if (!(_GD->m_prevMouseState->rgbButtons[1] & 0x80) && _GD->m_mouseState->rgbButtons[1] & 0x80)
@@ -246,7 +245,7 @@ void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 			for (auto it = m_holes.begin(); it != m_holes.end(); ++it)
 			{
 				//draw
-				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 1, 1, 0.5), 0, m_circleSize * 0.5f, Vector2(1, 1) * it->second / m_circleSize.x, SpriteEffects_None);
+				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 1, 1, 0.2), 0, m_circleSize * 0.5f, it->second / m_circleSize.x, SpriteEffects_None);
 			}
 			m_holes.clear();
 
@@ -268,8 +267,9 @@ void VBPlane::updateVerts()
 	{
 		for (int j = 0; j < m_height; j++)
 		{
-			Color* color = m_renderTarget->GetPixel(i, (j*m_width));
+			Color* color = m_renderTarget->GetPixel(i, j);
 			m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->y * 20, m_vertices[(j * m_width) + i].Pos.z);
+			m_vertices[(j * m_width) + i].baseColor = *m_renderTarget->GetPixel(i, j);
 		}
 	}
 }
