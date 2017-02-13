@@ -23,23 +23,29 @@ void Camera::Tick(GameData* _GD)
 
 	if (_GD->m_keyboardState[DIK_A] & 0x80)
 	{
-		float distance = sqrt(pow(m_target.x - m_pos.x, 2) +
-			pow(m_target.y - m_pos.y, 2) +
-			pow(m_target.z - m_pos.z, 2));
+		//float distance = sqrt(pow(m_target.x - m_pos.x, 2) +
+			//pow(m_target.y - m_pos.y, 2) +
+			//pow(m_target.z - m_pos.z, 2));
 
-		m_pos += Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
-		m_yaw += 0.01f;
-		m_pos -= Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+		//m_pos += Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+		//m_yaw += 0.01f;
+		//m_pos -= Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+
+		m_pos -= Vector3::Right;
+		m_target -= Vector3::Right;
 	}
 	if (_GD->m_keyboardState[DIK_D] & 0x80)
 	{
-		float distance = sqrt(pow(m_target.x - m_pos.x, 2) +
-			pow(m_target.y - m_pos.y, 2) +
-			pow(m_target.z - m_pos.z, 2));
+		//float distance = sqrt(pow(m_target.x - m_pos.x, 2) +
+		//	pow(m_target.y - m_pos.y, 2) +
+		//	pow(m_target.z - m_pos.z, 2));
 
-		m_pos += Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
-		m_yaw -= 0.01f;
-		m_pos -= Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+		//m_pos += Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+		//m_yaw -= 0.01f;
+		//m_pos -= Vector3::Transform(Vector3::Forward, Matrix::CreateRotationY(m_yaw)) * distance;
+
+		m_pos += Vector3::Right;
+		m_target += Vector3::Right;
 	}
 
 	//calculate standard transforms for a camera

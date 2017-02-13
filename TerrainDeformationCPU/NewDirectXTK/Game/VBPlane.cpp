@@ -10,7 +10,6 @@ void VBPlane::init(ID3D11Device* GD)
 	HeightMapInfo hmInfo;
 	if (loadHeightMap("heightmap.bmp", hmInfo))
 	{
-		std::cout << "YESS!";
 		m_width = hmInfo.terrainWidth;
 		m_height = hmInfo.terrainWidth;
 	}
@@ -18,7 +17,6 @@ void VBPlane::init(ID3D11Device* GD)
 	{
 		m_width = 2;
 		m_height = 2;
-		std::cout << "NOOO!";
 	}
 
 
@@ -203,7 +201,7 @@ void VBPlane::Tick(GameData* _GD)
 		}
 		if (!(_GD->m_prevMouseState->rgbButtons[1] & 0x80) && _GD->m_mouseState->rgbButtons[1] & 0x80)
 		{
-			//moveSphere(true, Vector3(_GD->m_Circle->GetPos().x, m_vertices[closestVertIndex].Pos.y, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius, 2);
+
 		}
 	}
 
@@ -218,7 +216,7 @@ void VBPlane::DrawRenderTarget(DrawData2D* _DD, GameData* _GD)
 
 	_DD->m_Sprites->Begin();
 
-	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 1.0f, 1.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One, SpriteEffects_None);
+	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 0.0f, 0.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One);
 
 	_DD->m_Sprites->End();
 
@@ -245,7 +243,7 @@ void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 			for (auto it = m_holes.begin(); it != m_holes.end(); ++it)
 			{
 				//draw
-				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 1, 1, 0.2), 0, m_circleSize * 0.5f, it->second / m_circleSize.x, SpriteEffects_None);
+				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 0, 0, 0.2), 0, m_circleSize * 0.5f, it->second / m_circleSize.x);
 			}
 			m_holes.clear();
 
@@ -268,8 +266,8 @@ void VBPlane::updateVerts()
 		for (int j = 0; j < m_height; j++)
 		{
 			Color* color = m_renderTarget->GetPixel(i, j);
-			m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->y * 20, m_vertices[(j * m_width) + i].Pos.z);
-			m_vertices[(j * m_width) + i].baseColor = *m_renderTarget->GetPixel(i, j);
+			m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->x * 20, m_vertices[(j * m_width) + i].Pos.z);
+			m_vertices[(j * m_width) + i].baseColor = *new Color(color->x, 0,0,1);
 		}
 	}
 }
@@ -277,42 +275,6 @@ void VBPlane::updateVerts()
 void VBPlane::MakeHole(const Vector2& pos, const float& radius)
 {
 	m_holes.push_back(std::pair<Vector2, float>(pos, radius));
-}
-
-void VBPlane::moveSphere(bool _additive, Vector3 _center, float _radius, float _maxDisplacement)
-{
-	for (int i = 0; i < numVerts; i++)
-	{
-		float distance = sqrt(pow(_center.x - m_vertices[i].Pos.x, 2) +
-			pow(_center.y - m_vertices[i].Pos.y, 2) +
-			pow(_center.z - m_vertices[i].Pos.z, 2));
-
-		if (distance < (_radius * _radius))
-		{
-			float displacement = _maxDisplacement - ((_maxDisplacement / _radius) * distance);
-			float colourChange = 0.1f - ((0.1f / _radius) * distance);
-
-			if (displacement < 0)
-			{
-				displacement = 0;
-			}
-			if (colourChange < 0)
-			{
-				colourChange = 0;
-			}
-
-			if (_additive && displacement > 0)
-			{
-				m_vertices[i].baseColor += Color(colourChange, colourChange, colourChange, 0.0f);
-				m_vertices[i].Pos += Vector3(0, displacement, 0);
-			}
-			else if(displacement > 0)
-			{
-				m_vertices[i].baseColor -= Color(colourChange, colourChange, colourChange, 0.0f);
-				m_vertices[i].Pos -= Vector3(0, displacement, 0);
-			}
-		}
-	}
 }
 
 void VBPlane::Draw(DrawData* _DD)
@@ -323,7 +285,6 @@ void VBPlane::Draw(DrawData* _DD)
 	_DD->m_pd3dImmediateContext->Unmap(m_VertexBuffer, 0);
 	VBGO::Draw(_DD);
 }
-
 
 bool VBPlane::loadHeightMap(char* filename, HeightMapInfo &hminfo)
 {
