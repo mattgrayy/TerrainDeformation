@@ -34,8 +34,6 @@ public:
 
 	void MakeHole(const Vector2& pos, const float& radius);
 
-	void moveSphere(bool _additive, Vector3 _center, float _radius, float _maxDisplacement);
-
 	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
 
 protected:
@@ -49,7 +47,9 @@ protected:
 	ID3D11ShaderResourceView* m_heightMap;
 	ID3D11ShaderResourceView* m_circleTex;
 	Vector2 m_circleSize;
+
 	std::vector<std::pair<const Vector2, const float>> m_holes;
+	std::vector<std::pair<const Vector2, const float>> m_mounds;
 
 	int numVerts;
 	myVertex* m_vertices;
