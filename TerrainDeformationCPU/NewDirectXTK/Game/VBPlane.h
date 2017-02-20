@@ -23,6 +23,13 @@ public:
 		XMFLOAT3 *heightMap;    // Array to store terrain's vertex positions
 	};
 
+	struct DeformStencil {      
+		ID3D11ShaderResourceView* texture;
+		Vector2 position;
+		float scale;
+		float yRotation;
+	};
+
 	//initialise the Veretx and Index buffers for the Plane
 	void init(ID3D11Device* GD);
 	virtual void Tick(GameData* _GD);
@@ -31,6 +38,8 @@ public:
 	void DrawRenderTarget(DrawData2D* _DD, GameData* _GD);
 	void DrawTerrainElements(DrawData2D* _DD, GameData* _GD);
 	void updateVerts();
+
+	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation);
 
 	void MakeHole(const Vector2& pos, const float& radius);
 
@@ -46,7 +55,10 @@ protected:
 
 	ID3D11ShaderResourceView* m_heightMap;
 	ID3D11ShaderResourceView* m_circleTex;
+	ID3D11ShaderResourceView* m_footPrint;
 	Vector2 m_circleSize;
+
+	std::vector<DeformStencil> m_stencils;
 
 	std::vector<std::pair<const Vector2, const float>> m_holes;
 	std::vector<std::pair<const Vector2, const float>> m_mounds;
