@@ -29,11 +29,21 @@ public:
 	void Map(ID3D11DeviceContext* _pd3dImmediateContext);
 	void Unmap(ID3D11DeviceContext* _pd3dImmediateContext);
 	UINT GetPitch();
+
 	Color* GetPixel(int x, int y);
+	Vector2 GetSize() { return Vector2(m_width, m_height); }
 
 	ID3D11BlendState* GetDigBlend()
 	{ 
 		return m_digBlendState; 
+	}
+	ID3D11BlendState* GetDigToLevelBlend()
+	{
+		return m_digToLevelBlendState;
+	}
+	ID3D11BlendState* GetDigOverflowBlend()
+	{
+		return m_digOverflowBlendState;
 	}
 
 protected:
@@ -66,7 +76,8 @@ protected:
 
 	//digging Blendstate
 	ID3D11BlendState* m_digBlendState = nullptr;
-
+	ID3D11BlendState* m_digToLevelBlendState = nullptr;
+	ID3D11BlendState* m_digOverflowBlendState = nullptr;
 };
 
 #endif

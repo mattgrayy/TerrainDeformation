@@ -28,6 +28,8 @@ public:
 		Vector2 position;
 		float scale;
 		float yRotation;
+		float depth;
+		Color colour;
 	};
 
 	//initialise the Veretx and Index buffers for the Plane
@@ -39,9 +41,8 @@ public:
 	void DrawTerrainElements(DrawData2D* _DD, GameData* _GD);
 	void updateVerts();
 
-	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation);
-
-	void MakeHole(const Vector2& pos, const float& radius);
+	Color levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale);
+	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth);
 
 	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
 
@@ -59,14 +60,12 @@ protected:
 	Vector2 m_circleSize;
 
 	std::vector<DeformStencil> m_stencils;
-
-	std::vector<std::pair<const Vector2, const float>> m_holes;
-	std::vector<std::pair<const Vector2, const float>> m_mounds;
+	std::vector<DeformStencil> m_stencilsToLevel;
+	std::vector<DeformStencil> m_stencilsToOverflow;
 
 	int numVerts;
 	myVertex* m_vertices;
 	RenderTarget* m_renderTarget;
-
 };
 
 #endif

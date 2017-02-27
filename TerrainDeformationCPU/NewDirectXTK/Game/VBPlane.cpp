@@ -23,7 +23,6 @@ void VBPlane::init(ID3D11Device* GD)
 	string fullfilename = "heightmap.bmp";
 	HRESULT hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_heightMap);
 
-
 	fullfilename = "Explosion.png";
 	hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_circleTex);
 
@@ -199,9 +198,7 @@ void VBPlane::Tick(GameData* _GD)
 	{
 		if (!(_GD->m_prevMouseState->rgbButtons[0] & 0x80) && _GD->m_mouseState->rgbButtons[0] & 0x80)
 		{
-			//MakeHole(Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius*2);
-
-			makeStencil(m_footPrint, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), 0.1, _GD->m_Circle->m_radius);
+			makeStencil(m_footPrint, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.05f);
 		}
 		if (!(_GD->m_prevMouseState->rgbButtons[1] & 0x80) && _GD->m_mouseState->rgbButtons[1] & 0x80)
 		{
@@ -220,7 +217,7 @@ void VBPlane::DrawRenderTarget(DrawData2D* _DD, GameData* _GD)
 
 	_DD->m_Sprites->Begin();
 
-	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 0.0f, 0.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One);
+	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 1.0f, 0.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One);
 
 	_DD->m_Sprites->End();
 
@@ -231,13 +228,47 @@ void VBPlane::DrawRenderTarget(DrawData2D* _DD, GameData* _GD)
 
 void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 {
-	if (/*m_holes.size() > 0*/ m_stencils.size() > 0)
+	if (m_stencils.size() > 0)
 	{
 		//Unmap
 		m_renderTarget->Unmap(_GD->m_ImmediateContext);
 
 		//Begin render target
 		m_renderTarget->Begin(_GD->m_ImmediateContext, true);
+
+		if (m_stencilsToOverflow.size() > 0)
+		{
+			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
+			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigOverflowBlend());
+
+			for (auto it = m_stencilsToOverflow.begin(); it != m_stencilsToOverflow.end(); ++it)
+			{
+				//draw
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0, 0, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
+
+			}
+			m_stencilsToOverflow.clear();
+
+			//end sprites
+			_DD->m_Sprites->End();
+		}
+
+		if (m_stencilsToLevel.size() > 0)
+		{
+			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
+			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigToLevelBlend());
+
+			for (auto it = m_stencilsToLevel.begin(); it != m_stencilsToLevel.end(); ++it)
+			{
+				//draw
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0, 0, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
+
+			}
+			m_stencilsToLevel.clear();
+
+			//end sprites
+			_DD->m_Sprites->End();
+		}
 
 		if (m_stencils.size() > 0)
 		{
@@ -247,7 +278,8 @@ void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 			for (auto it = m_stencils.begin(); it != m_stencils.end(); ++it)
 			{
 				//draw
-				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(1, 0, 0, 0.2), it->yRotation, it->position, it->scale);
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0.2, 0.2, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
+
 			}
 			m_stencils.clear();
 
@@ -255,39 +287,6 @@ void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 			_DD->m_Sprites->End();
 		}
 
-		/*
-		if (m_mounds.size() > 0)
-		{
-			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
-			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate);
-
-			for (auto it = m_mounds.begin(); it != m_mounds.end(); ++it)
-			{
-				//draw
-				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(0.01, 0, 0, 0), 0, m_circleSize * 0.5f, it->second / m_circleSize.x);
-			}
-			m_mounds.clear();
-
-			//end sprites
-			_DD->m_Sprites->End();
-		}
-
-		if (m_holes.size() > 0)
-		{
-			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
-			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigBlend());
-
-			for (auto it = m_holes.begin(); it != m_holes.end(); ++it)
-			{
-				//draw
-
-				_DD->m_Sprites->Draw(m_circleTex, it->first, nullptr, Color(1, 0, 0, 0.2), 0, m_circleSize * 0.5f, it->second / m_circleSize.x);
-			}
-			m_holes.clear();
-
-			//end sprites
-			_DD->m_Sprites->End();
-		}*/
 
 		//end render target
 		m_renderTarget->End(_GD->m_ImmediateContext);
@@ -305,28 +304,66 @@ void VBPlane::updateVerts()
 		{
 			Color* color = m_renderTarget->GetPixel(i, j);
 			m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->x * 20, m_vertices[(j * m_width) + i].Pos.z);
-			m_vertices[(j * m_width) + i].baseColor = Color(color->x, 0, 0, 1);
+			m_vertices[(j * m_width) + i].baseColor = Color(color->x, color->y, color->z, 1);
 		}
 	}
 }
 
-void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation)
+Color VBPlane::levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale)
 {
+	//this nasty thing is required to find out the size of this image!
+	ID3D11Resource *pResource;
+	D3D11_TEXTURE2D_DESC Desc;
+	_texture->GetResource(&pResource);
+	((ID3D11Texture2D *)pResource)->GetDesc(&Desc);
+
+	Color lowest;
+	
+	//////////////////////////// NEED TO CALCULATE THE ACTUAL TARGET LOCATION, NOT THISA RANDOM GUESS THING
+
+	for (int x = _position.x; x < _position.x + Desc.Width; x++)
+	{
+		for (int y = _position.y; y < _position.y + Desc.Height; y++)
+		{
+			if (x <= m_renderTarget->GetSize().x && y <= m_renderTarget->GetSize().y)
+			{
+				Color pixCol = *m_renderTarget->GetPixel(x, y);
+
+				if (pixCol.x < lowest.x || lowest.x == 0)
+				{
+					lowest = pixCol;
+				}
+			}
+		}
+	}
+
+	return lowest;
+}
+
+void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth)
+{
+	Color c = levelSurfaceForStencil(_texture, _position, _scale);
+	std::cout << c.y << endl;
 	DeformStencil _Def = DeformStencil();
 
 	_Def.texture = _texture;
 	_Def.position = _position;
-	_Def.scale = _scale;
 	_Def.yRotation = _yRotation;
 
-	m_stencils.push_back(_Def);
-}
+	if (c.y > 0)
+	{
+		_Def.scale = _scale + (_scale * 0.5);
+		_Def.depth = _depth / 2;
 
-void VBPlane::MakeHole(const Vector2& pos, const float& radius)
-{
-	m_holes.push_back(std::pair<Vector2, float>(pos, radius));
-	m_holes.push_back(std::pair<Vector2, float>(pos, radius));
-	m_mounds.push_back(std::pair<Vector2, float>(pos, radius + (radius/5)));
+		m_stencilsToOverflow.push_back(_Def);
+	}
+
+	_Def.scale = _scale;
+	_Def.depth = _depth;
+	m_stencils.push_back(_Def);
+
+	_Def.depth = c.x;
+	m_stencilsToLevel.push_back(_Def);
 }
 
 void VBPlane::Draw(DrawData* _DD)

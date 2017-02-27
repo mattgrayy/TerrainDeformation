@@ -72,16 +72,34 @@ RenderTarget::RenderTarget(ID3D11Device* _device, int _width, int _height) :m_wi
 	rtbd.BlendEnable = true;
 	rtbd.SrcBlend = D3D11_BLEND_SRC_ALPHA;
 	rtbd.DestBlend = D3D11_BLEND_ONE;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
+	rtbd.DestBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED;
+	blendDesc.AlphaToCoverageEnable = false;
+	blendDesc.RenderTarget[0] = rtbd;
+	result = _device->CreateBlendState(&blendDesc, &m_digOverflowBlendState);
+
+	rtbd.BlendEnable = true;
+	rtbd.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+	rtbd.DestBlend = D3D11_BLEND_ONE;
 	rtbd.BlendOp = D3D11_BLEND_OP_REV_SUBTRACT;
 	rtbd.SrcBlendAlpha = D3D11_BLEND_SRC_ALPHA;
 	rtbd.DestBlendAlpha = D3D11_BLEND_ONE;
 	rtbd.BlendOpAlpha = D3D11_BLEND_OP_REV_SUBTRACT;
 	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-
 	blendDesc.AlphaToCoverageEnable = false;
 	blendDesc.RenderTarget[0] = rtbd;
-
 	result = _device->CreateBlendState(&blendDesc, &m_digBlendState);
+
+	rtbd.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+	rtbd.BlendOp = D3D11_BLEND_OP_ADD;
+	rtbd.SrcBlendAlpha = D3D11_BLEND_ONE;
+	rtbd.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+	rtbd.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_RED;
+	blendDesc.RenderTarget[0] = rtbd;
+	result = _device->CreateBlendState(&blendDesc, &m_digToLevelBlendState);
 }
 
 RenderTarget::~RenderTarget()
