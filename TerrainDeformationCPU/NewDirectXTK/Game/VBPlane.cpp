@@ -321,9 +321,12 @@ Color VBPlane::levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector
 	
 	//////////////////////////// NEED TO CALCULATE THE ACTUAL TARGET LOCATION, NOT THISA RANDOM GUESS THING
 
-	for (int x = _position.x; x < _position.x + Desc.Width; x++)
+	int xScaledPositioned = _position.x - (Desc.Width * _scale);
+	int yScaledPositioned = _position.y - (Desc.Height * _scale);
+
+	for (int x = xScaledPositioned; x < xScaledPositioned + Desc.Width; x++)
 	{
-		for (int y = _position.y; y < _position.y + Desc.Height; y++)
+		for (int y = yScaledPositioned; y < yScaledPositioned + Desc.Height; y++)
 		{
 			if (x <= m_renderTarget->GetSize().x && y <= m_renderTarget->GetSize().y)
 			{
