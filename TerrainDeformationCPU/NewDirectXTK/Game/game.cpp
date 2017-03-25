@@ -73,7 +73,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	float AR = (float)width / (float)height;
 
 	//create a base light
-	m_light = new Light(Vector3(0.0f, 100.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.4f, 0.1f, 0.1f, 1.0f));
+	m_light = new Light(Vector3(0.0f, 200.0f, 160.0f), Color(1.0f, 1.0f, 1.0f, 1.0f), Color(0.8f, 0.8f, 0.8f, 1.0f));
 	m_GameObjects.push_back(m_light);
 
 	//create DrawData struct and populate its pointers
@@ -103,6 +103,8 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	//add a secondary camera
 	m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, m_plane, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
 	m_GameObjects.push_back(m_TPScam);
+
+	m_GD->m_clickState = IMPRINT;
 }
 
 Game::~Game()
@@ -176,6 +178,9 @@ bool Game::Update()
 		}
 	}
 
+	// For demonstration input purposes
+	handleDemoInput();
+
 	//calculate frame time-step dt for passing down to game objects
 	DWORD currentTime = GetTickCount();
 	m_GD->m_dt = min((float)(currentTime - m_playTime) / 1000.0f, 0.1f);
@@ -195,6 +200,27 @@ bool Game::Update()
 	GetWindowRect(m_hWnd, &window);
 	SetCursorPos(0.5*(window.left + window.right), 0.5*(window.bottom + window.top));
 	return true;
+}
+
+// For demonstration input purposes
+void Game::handleDemoInput()
+{
+	if ((m_keyboardState[DIK_1] & 0x80) && !(m_prevKeyboardState[DIK_1] & 0x80))
+	{
+		m_GD->m_clickState = IMPRINT;
+	}
+	if ((m_keyboardState[DIK_2] & 0x80) && !(m_prevKeyboardState[DIK_2] & 0x80))
+	{
+		m_GD->m_clickState = EXPLODE;
+	}
+	if ((m_keyboardState[DIK_3] & 0x80) && !(m_prevKeyboardState[DIK_3] & 0x80))
+	{
+		m_GD->m_clickState = RAIN;
+	}
+	if ((m_keyboardState[DIK_4] & 0x80) && !(m_prevKeyboardState[DIK_4] & 0x80))
+	{
+		m_GD->m_clickState = SNOW;
+	}
 }
 
 void Game::Render(ID3D11DeviceContext* _pd3dImmediateContext)

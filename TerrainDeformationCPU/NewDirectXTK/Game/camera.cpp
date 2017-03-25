@@ -30,6 +30,33 @@ void Camera::Tick(GameData* _GD)
 		m_pos += Vector3::Right;
 		m_target += Vector3::Right;
 	}
+	if (_GD->m_keyboardState[DIK_W] & 0x80)
+	{
+		m_pos += Vector3::Forward;
+		m_target += Vector3::Forward;
+	}
+	if (_GD->m_keyboardState[DIK_S] & 0x80)
+	{
+		m_pos -= Vector3::Forward;
+		m_target -= Vector3::Forward;
+	}
+
+	if (_GD->m_keyboardState[DIK_Q] & 0x80)
+	{
+		m_target -= Vector3::Right;
+	}
+	if (_GD->m_keyboardState[DIK_E] & 0x80)
+	{
+		m_target += Vector3::Right;
+	}
+	if (_GD->m_keyboardState[DIK_F] & 0x80)
+	{
+		m_target -= Vector3::Forward;
+	}
+	if (_GD->m_keyboardState[DIK_R] & 0x80)
+	{
+		m_target += Vector3::Forward;
+	}
 
 	//calculate standard transforms for a camera
 	m_projMat = Matrix::CreatePerspectiveFieldOfView(m_fieldOfView, m_aspectRatio, m_nearPlaneDistance, m_farPlaneDistance);

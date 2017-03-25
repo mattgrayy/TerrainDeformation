@@ -15,6 +15,15 @@
 using namespace DirectX;
 using namespace SimpleMath;
 
+// For demonstration input purposes
+enum ClickState
+{
+	IMPRINT = 0,
+	EXPLODE = 1,
+	RAIN = 2,
+	SNOW = 3
+};
+
 struct GameData
 {
 	float m_dt;  //time step since last frame
@@ -32,5 +41,6 @@ struct GameData
 	HWND* m_hwnd;
 
 	Circle* m_Circle;
+	ClickState m_clickState;
 };
 #endif

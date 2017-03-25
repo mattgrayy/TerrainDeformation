@@ -42,7 +42,7 @@ public:
 	void updateVerts();
 
 	Color levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale);
-	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth);
+	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _toLevel, bool _toRaise);
 
 	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
 
@@ -66,6 +66,8 @@ protected:
 	int numVerts;
 	myVertex* m_vertices;
 	RenderTarget* m_renderTarget;
+
+	bool verticesUpdated = true;
 };
 
 #endif

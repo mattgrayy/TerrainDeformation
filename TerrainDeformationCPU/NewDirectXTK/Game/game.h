@@ -39,6 +39,7 @@ public:
 	~Game();
 
 	bool Update(); //tick the game state
+	void handleDemoInput();
 
 	void Render(ID3D11DeviceContext* _pd3dImmediateContext); //render the current game state
 

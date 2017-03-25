@@ -15,9 +15,10 @@ Light::~Light()
 void Light::Tick(GameData* _GD)
 {
 	//not really needed but spins the light around to show off the lambert default VBGO shader
+	/*
 	static float time = 0.0f;
 	time += _GD->m_dt;
 	m_pos.x = 100.0f * cos(time);
 	m_pos.z = 100.0f * sin(time);
-	if (time > XM_2PI) time -= XM_2PI;
+	if (time > XM_2PI) time -= XM_2PI;*/
 }
