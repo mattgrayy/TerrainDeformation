@@ -337,19 +337,9 @@ Color VBPlane::levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector
 
 void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _toLevel, bool _toRaise)
 {
-	if(_toRaise)
+	if (_toRaise)
 	{
-	DeformStencil _Def = DeformStencil();
-	int xScaledPositioned = _position.x - (Desc.Width * _scale);
-	int yScaledPositioned = _position.y - (Desc.Height * _scale);
-
-	for (int x = xScaledPositioned; x < xScaledPositioned + Desc.Width; x++)
-	{
-		for (int y = yScaledPositioned; y < yScaledPositioned + Desc.Height; y++)
-		{
-			if (x <= m_renderTarget->GetSize().x && y <= m_renderTarget->GetSize().y)
-			{
-				Color pixCol = *m_renderTarget->GetPixel(x, y);
+		DeformStencil _Def = DeformStencil();
 
 		_Def.texture = _texture;
 		_Def.position = _position;
