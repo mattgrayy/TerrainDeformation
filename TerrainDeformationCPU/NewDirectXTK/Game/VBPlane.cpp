@@ -339,7 +339,17 @@ void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position,
 {
 	if(_toRaise)
 	{
-		DeformStencil _Def = DeformStencil();
+	DeformStencil _Def = DeformStencil();
+	int xScaledPositioned = _position.x - (Desc.Width * _scale);
+	int yScaledPositioned = _position.y - (Desc.Height * _scale);
+
+	for (int x = xScaledPositioned; x < xScaledPositioned + Desc.Width; x++)
+	{
+		for (int y = yScaledPositioned; y < yScaledPositioned + Desc.Height; y++)
+		{
+			if (x <= m_renderTarget->GetSize().x && y <= m_renderTarget->GetSize().y)
+			{
+				Color pixCol = *m_renderTarget->GetPixel(x, y);
 
 		_Def.texture = _texture;
 		_Def.position = _position;
