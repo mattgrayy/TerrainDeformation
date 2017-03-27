@@ -24,6 +24,13 @@ enum ClickState
 	SNOW = 3
 };
 
+enum DisplayState
+{
+	HEIGHT = 0,
+	SOFTNESS = 1,
+	DISPLACEMENT
+};
+
 struct GameData
 {
 	float m_dt;  //time step since last frame
@@ -42,5 +49,6 @@ struct GameData
 
 	Circle* m_Circle;
 	ClickState m_clickState;
+	DisplayState m_displyState;
 };
 #endif

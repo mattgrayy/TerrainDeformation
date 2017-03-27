@@ -105,6 +105,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	m_GameObjects.push_back(m_TPScam);
 
 	m_GD->m_clickState = IMPRINT;
+	m_GD->m_displyState = HEIGHT;
 }
 
 Game::~Game()
@@ -220,6 +221,21 @@ void Game::handleDemoInput()
 	if ((m_keyboardState[DIK_4] & 0x80) && !(m_prevKeyboardState[DIK_4] & 0x80))
 	{
 		m_GD->m_clickState = SNOW;
+	}
+	if ((m_keyboardState[DIK_Z] & 0x80) && !(m_prevKeyboardState[DIK_Z] & 0x80))
+	{
+		m_GD->m_displyState = HEIGHT;
+		m_plane->verticesUpdated = true;
+	}
+	if ((m_keyboardState[DIK_X] & 0x80) && !(m_prevKeyboardState[DIK_X] & 0x80))
+	{
+		m_GD->m_displyState = SOFTNESS;
+		m_plane->verticesUpdated = true;
+	}
+	if ((m_keyboardState[DIK_C] & 0x80) && !(m_prevKeyboardState[DIK_C] & 0x80))
+	{
+		m_GD->m_displyState = DISPLACEMENT;
+		m_plane->verticesUpdated = true;
 	}
 }
 

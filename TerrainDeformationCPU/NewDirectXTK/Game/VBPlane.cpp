@@ -203,7 +203,7 @@ void VBPlane::Tick(GameData* _GD)
 				makeStencil(m_footPrint, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.05f, true, false);
 				break;
 			case EXPLODE:
-				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.1f, false, false);
+				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.1f * (_GD->m_Circle->m_radius/2), false, false);
 				break;
 			case RAIN:
 				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.0f, false, true);
@@ -217,7 +217,7 @@ void VBPlane::Tick(GameData* _GD)
 		}
 	}
 
-	updateVerts();
+	updateVerts(_GD);
 
 	VBGO::Tick(_GD);
 }
@@ -309,7 +309,7 @@ void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 	}
 }
 
-void VBPlane::updateVerts()
+void VBPlane::updateVerts(GameData* _GD)
 {
 	if (verticesUpdated)
 	{
@@ -319,7 +319,21 @@ void VBPlane::updateVerts()
 			{
 				Color* color = m_renderTarget->GetPixel(i, j);
 				m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->x * 20, m_vertices[(j * m_width) + i].Pos.z);
-				m_vertices[(j * m_width) + i].baseColor = Color(color->x, color->x, color->x, 1);
+
+				switch (_GD->m_displyState)
+				{
+				case HEIGHT:
+					m_vertices[(j * m_width) + i].baseColor = Color(color->x, color->x/2, color->x/2, 1);
+					break;
+				case SOFTNESS:
+					m_vertices[(j * m_width) + i].baseColor = Color(color->y/2, color->y, color->y/2, 1);
+					break;
+				case DISPLACEMENT:
+					m_vertices[(j * m_width) + i].baseColor = Color(color->z/2, color->z/2, color->z, 1);
+					break;
+				default:
+					break;
+				}
 			}
 		}
 		verticesUpdated = false;

@@ -39,12 +39,14 @@ public:
 
 	void DrawRenderTarget(DrawData2D* _DD, GameData* _GD);
 	void DrawTerrainElements(DrawData2D* _DD, GameData* _GD);
-	void updateVerts();
+	void updateVerts(GameData* _GD);
 
 	Color levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale);
 	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _toLevel, bool _toRaise);
 
 	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
+
+	bool verticesUpdated = true;
 
 protected:
 	//this is to allow custom versions of this which create the basic Plane and then distort it
@@ -66,8 +68,6 @@ protected:
 	int numVerts;
 	myVertex* m_vertices;
 	RenderTarget* m_renderTarget;
-
-	bool verticesUpdated = true;
 };
 
 #endif
