@@ -203,7 +203,7 @@ void VBPlane::Tick(GameData* _GD)
 				makeStencil(m_footPrint, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.05f, true, false);
 				break;
 			case EXPLODE:
-				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.1f * (_GD->m_Circle->m_radius/2), false, false);
+				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, _GD->m_Circle->m_radius/30, false, false);
 				break;
 			case RAIN:
 				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.0f, false, true);
