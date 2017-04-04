@@ -9,10 +9,6 @@
 
 #define DESTROY( x ) if( x ){ x->Release(); x = nullptr;}
 
-//the base Game Object drawn using a Vertex and Index Buffer
-//all of the main aspects of drawing it have a default which is pointed to by a static pointer
-//this is only used if the version for this object is not set to nullptr
-
 using namespace DirectX;
 
 //default vertexshader
@@ -50,14 +46,10 @@ VBGO::VBGO()
 	m_pRasterState = nullptr;
 
 	m_topology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
-
-	//NOTE WE DON'T CREATE ANYTHING HERE
-	//WHATEVER INHERITS THIS WILL DO THAT
 }
 
 VBGO::~VBGO()
 {
-	//BUT WE DO TIDY THEM AWAY
 	DESTROY(m_VertexBuffer);
 	DESTROY(m_IndexBuffer);
 	DESTROY(m_pVertexShader);
@@ -65,7 +57,6 @@ VBGO::~VBGO()
 	DESTROY(m_pPixelShader);
 	DESTROY(m_pTextureRV);
 	DESTROY(m_pConstantBuffer);
-	//if (m_pCB) delete m_pCB; delete this where created as there will know its type
 	DESTROY(m_pSampler);
 	DESTROY(m_pRasterState);
 }
@@ -102,13 +93,10 @@ void VBGO::Draw(DrawData* _DD)
 	_DD->m_pd3dImmediateContext->VSSetConstantBuffers(0, 1, &useCB);
 	_DD->m_pd3dImmediateContext->PSSetConstantBuffers(0, 1, &useCB);
 
-	//unless it has it own set them to the static defaults
-
 	//set primitive type used
 	_DD->m_pd3dImmediateContext->IASetPrimitiveTopology(m_topology);
 
 	//set  vertex layout
-	//note that if you do use this you'll need to change the stride and offset above
 	ID3D11InputLayout* useLayout = m_pVertexLayout ? m_pVertexLayout : s_pVertexLayout; 
 	_DD->m_pd3dImmediateContext->IASetInputLayout(useLayout);
 
@@ -129,7 +117,7 @@ void VBGO::Draw(DrawData* _DD)
 	_DD->m_pd3dImmediateContext->PSSetSamplers(0, 1, &useSample);
 
 	//and draw
-	_DD->m_pd3dImmediateContext->DrawIndexed(3 * m_numPrims, 0, 0);//number here will need to change depending on the primative topology!
+	_DD->m_pd3dImmediateContext->DrawIndexed(3 * m_numPrims, 0, 0);
 }
 
 //--------------------------------------------------------------------------------------
@@ -163,8 +151,6 @@ HRESULT CompileShaderFromFile(WCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szS
 
 void VBGO::Init(ID3D11Device* _GD)
 {
-	//set up all static stuff
-
 	//default vertex shader
 	ID3DBlob* pVertexShaderBuffer = NULL;
 	HRESULT hr = CompileShaderFromFile(L"../Assets/shader.fx", "VS", "vs_4_0_level_9_1", &pVertexShaderBuffer);
@@ -227,13 +213,12 @@ void VBGO::Init(ID3D11Device* _GD)
 	rasterDesc.ScissorEnable = false;
 	rasterDesc.SlopeScaledDepthBias = 0.0f;
 
-	// Create the rasterizer state from the description we just filled out.
+	// Create the rasterizer state from the description just filled out.
 	hr = _GD->CreateRasterizerState(&rasterDesc, &s_pRasterState);
 }
 
 void VBGO::UpdateConstantBuffer(DrawData* _DD)
 {
-	//you'll need your own version of this if you use a different Constant Buffer
 	s_pCB->view = _DD->m_cam->GetView().Transpose();
 	s_pCB->projection = _DD->m_cam->GetProj().Transpose();
 	if (_DD->m_light)

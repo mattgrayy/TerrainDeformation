@@ -1,39 +1,30 @@
 #include "VBPlane.h"
-
-#include <iostream>
 #include "GameData.h"
 #include "WICTextureLoader.h"
 #include "helper.h"
 
 void VBPlane::init(ID3D11Device* GD)
 {
+	// read height map for intiial vertex positions
 	HeightMapInfo hmInfo;
 	if (loadHeightMap("heightmap.bmp", hmInfo))
 	{
 		m_width = hmInfo.terrainWidth;
 		m_height = hmInfo.terrainWidth;
 	}
-	else
+	else // arbitrary value if there is no height map to display error
 	{
 		m_width = 2;
 		m_height = 2;
 	}
 
+	// load heightmap texture for render target base
 	string fullfilename = "heightmap.bmp";
 	HRESULT hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_heightMap);
 
+	// load temporary demo input textures render target
 	fullfilename = "Explosion.png";
 	hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_circleTex);
-
-	//this nasty thing is required to find out the size of this image!
-	ID3D11Resource *pResource;
-	D3D11_TEXTURE2D_DESC Desc;
-	m_circleTex->GetResource(&pResource);
-	((ID3D11Texture2D *)pResource)->GetDesc(&Desc);
-
-	m_circleSize.x = Desc.Width;
-	m_circleSize.y = Desc.Height;
-
 	fullfilename = "FootPrint.png";
 	hr = CreateWICTextureFromFile(GD, Helper::charToWChar(fullfilename.c_str()), nullptr, &m_footPrint);
 
@@ -45,7 +36,7 @@ void VBPlane::init(ID3D11Device* GD)
 	WORD* indices = new WORD[m_numPrims * 3];
 
 	//as using the standard VB shader set the tex-coords somewhere safe
-	for (int i = 0; i<numVerts; i++)
+	for (int i = 0; i < numVerts; i++)
 	{
 		indices[i] = i;
 		m_vertices[i].Pos = Vector3(hmInfo.heightMap[i].x, hmInfo.heightMap[i].y, hmInfo.heightMap[i].z);
@@ -88,13 +79,13 @@ void VBPlane::init(ID3D11Device* GD)
 	}
 	
 	//////////////////////Compute Normals///////////////////////////
-	//Now we will compute the normals for each vertex using normal averaging
+	//Now compute the normals for each vertex using normal averaging
 	std::vector<XMFLOAT3> tempNormal;
 
 	//normalized and unnormalized normals
 	XMFLOAT3 unnormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-	//Used to get vectors (sides) from the position of the verts
+	//Used to get vectors from the position of the verts
 	float vecX, vecY, vecZ;
 
 	//Two edges of our triangle
@@ -110,13 +101,13 @@ void VBPlane::init(ID3D11Device* GD)
 		vecZ = m_vertices[indices[(i * 3)]].Pos.z - m_vertices[indices[(i * 3) + 2]].Pos.z;
 		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our first edge
 
-														//Get the vector describing another edge of our triangle (edge 2,1)
+		//Get the vector describing another edge of our triangle (edge 2,1)
 		vecX = m_vertices[indices[(i * 3) + 2]].Pos.x - m_vertices[indices[(i * 3) + 1]].Pos.x;
 		vecY = m_vertices[indices[(i * 3) + 2]].Pos.y - m_vertices[indices[(i * 3) + 1]].Pos.y;
 		vecZ = m_vertices[indices[(i * 3) + 2]].Pos.z - m_vertices[indices[(i * 3) + 1]].Pos.z;
 		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);    //Create our second edge
 
-														//Cross multiply the two edge vectors to get the un-normalized face normal
+		//Cross multiply the two edge vectors to get the un-normalized face normal
 		DirectX::XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
 		tempNormal.push_back(unnormalized);            //Save unormalized normal (for normal averaging)
 	}
@@ -124,9 +115,7 @@ void VBPlane::init(ID3D11Device* GD)
 	//Compute vertex normals (normal Averaging)
 	XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	int facesUsing = 0;
-	float tX;
-	float tY;
-	float tZ;
+	float tX, tY, tZ;
 
 	//Go through each vertex
 	for (int i = 0; i < numVerts; ++i)
@@ -134,9 +123,7 @@ void VBPlane::init(ID3D11Device* GD)
 		//Check which triangles use this vertex
 		for (int j = 0; j < m_numPrims; ++j)
 		{
-			if (indices[j * 3] == i ||
-				indices[(j * 3) + 1] == i ||
-				indices[(j * 3) + 2] == i)
+			if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i)
 			{
 				tX = XMVectorGetX(normalSum) + tempNormal[j].x;
 				tY = XMVectorGetY(normalSum) + tempNormal[j].y;
@@ -147,10 +134,8 @@ void VBPlane::init(ID3D11Device* GD)
 			}
 		}
 
-		//Get the actual normal by dividing the normalSum by the number of faces sharing the vertex
+		//Get the actual normal by dividing the normalSum by the number of faces sharing the vertex then normalize.
 		normalSum = normalSum / facesUsing;
-
-		//Normalize the normalSum vector
 		normalSum = XMVector3Normalize(normalSum);
 
 		//Store the normal in our current vertex
@@ -169,11 +154,28 @@ void VBPlane::init(ID3D11Device* GD)
 
 void VBPlane::Tick(GameData* _GD)
 {
+	////////////////////////////// This section is temporary demo input system for 
+	////////////////////////////// displaying the circle reticle and taking input for each type.
 	int closestVertIndex = -1;
 	float closestVertDistance = 300;
-
 	for (int i = 0; i < numVerts; i++)
 	{
+		if (_GD->m_Circle->GetPos().x < 0)
+		{
+			_GD->m_Circle->SetPos(Vector3(0, _GD->m_Circle->GetPos().y, _GD->m_Circle->GetPos().z));
+		}
+		if (_GD->m_Circle->GetPos().z < 0)
+		{
+			_GD->m_Circle->SetPos(Vector3(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().y, 0));
+		}
+		if (_GD->m_Circle->GetPos().x > m_width)
+		{
+			_GD->m_Circle->SetPos(Vector3(m_width, _GD->m_Circle->GetPos().y, _GD->m_Circle->GetPos().z));
+		}
+		if (_GD->m_Circle->GetPos().z > m_height)
+		{
+			_GD->m_Circle->SetPos(Vector3(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().y, m_height));
+		}
 		float distance = sqrt(pow(_GD->m_Circle->GetPos().x - m_vertices[i].Pos.x, 2) +
 			pow(_GD->m_Circle->GetPos().z - m_vertices[i].Pos.z, 2));
 
@@ -203,7 +205,7 @@ void VBPlane::Tick(GameData* _GD)
 				makeStencil(m_footPrint, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.05f, true, false);
 				break;
 			case EXPLODE:
-				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, _GD->m_Circle->m_radius/30, false, false);
+				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, _GD->m_Circle->m_radius/30, true, false);
 				break;
 			case RAIN:
 				makeStencil(m_circleTex, Vector2(_GD->m_Circle->GetPos().x, _GD->m_Circle->GetPos().z), _GD->m_Circle->m_radius / 50, 0, 0.0f, false, true);
@@ -216,6 +218,7 @@ void VBPlane::Tick(GameData* _GD)
 			}
 		}
 	}
+	/////////////////////////// Temp Demo block ends
 
 	updateVerts(_GD);
 
@@ -227,82 +230,58 @@ void VBPlane::DrawRenderTarget(DrawData2D* _DD, GameData* _GD)
 	m_renderTarget->Begin(_GD->m_ImmediateContext, false);
 
 	_DD->m_Sprites->Begin();
-
 	_DD->m_Sprites->Draw(m_heightMap, m_pos, nullptr, Color(1.0f, 1.0f, 1.0f, 1.0f), 0.0f, Vector2::Zero, Vector2::One);
-
 	_DD->m_Sprites->End();
 
 	m_renderTarget->End(_GD->m_ImmediateContext);
-
 	m_renderTarget->Map(_GD->m_ImmediateContext);
 }
 
 void VBPlane::DrawTerrainElements(DrawData2D* _DD, GameData* _GD)
 {
+	// if either are true, we have new deformation to calculate. Go through all stencils and draw to RT if required.
 	if (m_stencils.size() > 0 || m_stencilsToOverflow.size() > 0)
 	{
-		//Unmap
 		m_renderTarget->Unmap(_GD->m_ImmediateContext);
-
-		//Begin render target
 		m_renderTarget->Begin(_GD->m_ImmediateContext, true);
 
 		if (m_stencilsToOverflow.size() > 0)
 		{
-			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
 			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigOverflowBlend());
 
 			for (auto it = m_stencilsToOverflow.begin(); it != m_stencilsToOverflow.end(); ++it)
 			{
-				//draw
-				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0.5, 0.5, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
-
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, it->colour, it->yRotation, it->textureSize * 0.5f, it->scale);
 			}
 			m_stencilsToOverflow.clear();
-
-			//end sprites
 			_DD->m_Sprites->End();
 		}
 
 		if (m_stencilsToLevel.size() > 0)
 		{
-			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
 			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigToLevelBlend());
 
 			for (auto it = m_stencilsToLevel.begin(); it != m_stencilsToLevel.end(); ++it)
 			{
-				//draw
-				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0.5, 0.5, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
-
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, it->colour, it->yRotation, it->textureSize * 0.5f, it->scale);
 			}
 			m_stencilsToLevel.clear();
-
-			//end sprites
 			_DD->m_Sprites->End();
 		}
 
 		if (m_stencils.size() > 0)
 		{
-			//begin sprites WITH IMMEDIATE AND THE SECOND POINTER THINGY
 			_DD->m_Sprites->Begin(DirectX::SpriteSortMode::SpriteSortMode_Immediate, m_renderTarget->GetDigBlend());
 
 			for (auto it = m_stencils.begin(); it != m_stencils.end(); ++it)
 			{
-				//draw
-				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, Color(it->depth, 0.8, 0.8, 1), it->yRotation, m_circleSize * 0.5f, it->scale);
-
+				_DD->m_Sprites->Draw(it->texture, it->position, nullptr, it->colour, it->yRotation, it->textureSize * 0.5f, it->scale);
 			}
 			m_stencils.clear();
-
-			//end sprites
 			_DD->m_Sprites->End();
 		}
-
-
 		//end render target
 		m_renderTarget->End(_GD->m_ImmediateContext);
-
-		//remap
 		m_renderTarget->Map(_GD->m_ImmediateContext);
 
 		verticesUpdated = true;
@@ -317,19 +296,20 @@ void VBPlane::updateVerts(GameData* _GD)
 		{
 			for (int j = 0; j < m_height; j++)
 			{
-				Color* color = m_renderTarget->GetPixel(i, j);
-				m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, color->x * 20, m_vertices[(j * m_width) + i].Pos.z);
+				Color* colour = m_renderTarget->GetPixel(i, j);
+				m_vertices[(j * m_width) + i].Pos = Vector3(m_vertices[(j * m_width) + i].Pos.x, colour->x * 20, m_vertices[(j * m_width) + i].Pos.z);
 
+				// Temporary demo display of each height map colour normally would not change texture colour
 				switch (_GD->m_displyState)
 				{
 				case HEIGHT:
-					m_vertices[(j * m_width) + i].baseColor = Color(color->x, color->x/2, color->x/2, 1);
+					m_vertices[(j * m_width) + i].baseColor = Color(colour->x, colour->x/2, colour->x/2, 1);
 					break;
 				case SOFTNESS:
-					m_vertices[(j * m_width) + i].baseColor = Color(color->y/2, color->y, color->y/2, 1);
+					m_vertices[(j * m_width) + i].baseColor = Color(colour->y/2, colour->y, colour->y/2, 1);
 					break;
 				case DISPLACEMENT:
-					m_vertices[(j * m_width) + i].baseColor = Color(color->z/2, color->z/2, color->z, 1);
+					m_vertices[(j * m_width) + i].baseColor = Color(colour->z/2, colour->z/2, colour->z, 1);
 					break;
 				default:
 					break;
@@ -345,61 +325,61 @@ Color VBPlane::levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector
 	Vector2 closest;
 	closest.x = round(_position.x);
 	closest.y = round(_position.y);
-
 	return *m_renderTarget->GetPixel(closest.x, closest.y);
 }
 
 void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _toLevel, bool _toRaise)
 {
+	// get the size of the texture
+	ID3D11Resource *pResource;
+	D3D11_TEXTURE2D_DESC Desc;
+	_texture->GetResource(&pResource);
+	((ID3D11Texture2D *)pResource)->GetDesc(&Desc);
+	Vector2 textureSize = Vector2(Desc.Width, Desc.Height);
+
+	// create the basic stencil
+	DeformStencil _Def = DeformStencil();
+	_Def.texture = _texture;
+	_Def.textureSize = textureSize;
+	_Def.position = _position;
+	_Def.yRotation = _yRotation;
+	_Def.scale = _scale;
+
+	// the surface is being raised rather than lowered, for weather based input
 	if (_toRaise)
 	{
-		DeformStencil _Def = DeformStencil();
-
-		_Def.texture = _texture;
-		_Def.position = _position;
-		_Def.yRotation = _yRotation;
-		_Def.scale = _scale;
-		_Def.depth = _depth;
+		_Def.colour = Color(_depth, 0.1f,0.1f,1);
 		m_stencilsToOverflow.push_back(_Def);
 	}
 	else
 	{
+		// the area requires leveling before deformaiton
 		if (_toLevel)
 		{
+			// find the center pixel colour. Should be average of whole texture size in future update
 			Color c = levelSurfaceForStencil(_texture, _position, _scale);
 
+			// there is deformation required
 			if (c.z > 0)
 			{
-				DeformStencil _Def = DeformStencil();
-
-				_Def.texture = _texture;
-				_Def.position = _position;
-				_Def.yRotation = _yRotation;
-
+				// there is displacement required
 				if (c.y > 0)
 				{
 					_Def.scale = _scale + (_scale * 0.5);
-					_Def.depth = _depth / 2;
-
+					_Def.colour = Color(_depth/2, 0.1f, 0.1f, 1);
 					m_stencilsToOverflow.push_back(_Def);
 				}
-
 				_Def.scale = _scale;
-				_Def.depth = _depth;
+				_Def.colour = Color(_depth, 0.8f, 0.6f, 1);
 				m_stencils.push_back(_Def);
 
-				_Def.depth = c.x;
+				_Def.colour = Color(c.x, 0.5f, 0.3f, 1);
 				m_stencilsToLevel.push_back(_Def);
 			}
 		}
 		else
 		{
-			DeformStencil _Def = DeformStencil();
-			_Def.texture = _texture;
-			_Def.position = _position;
-			_Def.yRotation = _yRotation;
-			_Def.scale = _scale;
-			_Def.depth = _depth;
+			_Def.colour = Color(_depth, 0.8f, 0.6f, 1);
 			m_stencils.push_back(_Def);
 		}
 	}
@@ -407,6 +387,7 @@ void VBPlane::makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position,
 
 void VBPlane::Draw(DrawData* _DD)
 {
+	// update the dynamic vertex buffer with new positions and colours
 	D3D11_MAPPED_SUBRESOURCE resource;
 	_DD->m_pd3dImmediateContext->Map(m_VertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 	memcpy(resource.pData, m_vertices, sizeof(myVertex) * m_width * m_height);

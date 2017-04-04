@@ -23,7 +23,7 @@ enum ClickState
 	RAIN = 2,
 	SNOW = 3
 };
-
+// For demonstration input purposes
 enum DisplayState
 {
 	HEIGHT = 0,
@@ -45,10 +45,10 @@ struct GameData
 	DIMOUSESTATE* m_mouseState; //current state of the mouse
 	DIMOUSESTATE* m_prevMouseState; //previous state of the mouse
 
-	HWND* m_hwnd;
+	HWND* m_hwnd; // Demontration Input usage for window size
 
-	Circle* m_Circle;
-	ClickState m_clickState;
-	DisplayState m_displyState;
+	Circle* m_Circle; // Demontration Input usage for displaying input
+	ClickState m_clickState; // Demontration Input for the type of input
+	DisplayState m_displyState; // Demontration Input for the display of the terrain type
 };
 #endif

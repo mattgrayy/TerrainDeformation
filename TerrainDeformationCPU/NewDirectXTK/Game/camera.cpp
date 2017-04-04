@@ -19,28 +19,29 @@ Camera::~Camera()
 
 void Camera::Tick(GameData* _GD)
 {
-
+	// Temporary demonstration movement detection
 	if (_GD->m_keyboardState[DIK_A] & 0x80)
 	{
-		m_pos -= Vector3::Right;
-		m_target -= Vector3::Right;
+		m_pos -= Vector3::Right * 3;
+		m_target -= Vector3::Right * 3;
 	}
 	if (_GD->m_keyboardState[DIK_D] & 0x80)
 	{
-		m_pos += Vector3::Right;
-		m_target += Vector3::Right;
+		m_pos += Vector3::Right * 3;
+		m_target += Vector3::Right * 3;
 	}
 	if (_GD->m_keyboardState[DIK_W] & 0x80)
 	{
-		m_pos += Vector3::Forward;
-		m_target += Vector3::Forward;
+		m_pos += Vector3::Forward * 3;
+		m_target += Vector3::Forward * 3;
 	}
 	if (_GD->m_keyboardState[DIK_S] & 0x80)
 	{
-		m_pos -= Vector3::Forward;
-		m_target -= Vector3::Forward;
+		m_pos -= Vector3::Forward * 3;
+		m_target -= Vector3::Forward * 3;
 	}
 
+	// Temporary demonstration rotation detection
 	if (_GD->m_keyboardState[DIK_Q] & 0x80)
 	{
 		m_target -= Vector3::Right;
@@ -66,5 +67,4 @@ void Camera::Tick(GameData* _GD)
 
 void Camera::Draw(DrawData* _DD)
 {
-	//standard camera doesn't draw ANYTHING
 }

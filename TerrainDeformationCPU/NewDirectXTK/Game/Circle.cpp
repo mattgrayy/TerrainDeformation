@@ -1,6 +1,4 @@
 #include "Circle.h"
-
-#include <iostream>
 #include "GameData.h"
 
 void Circle::init(float _radius, ID3D11Device* GD)

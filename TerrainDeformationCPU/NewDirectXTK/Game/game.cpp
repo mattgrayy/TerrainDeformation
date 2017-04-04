@@ -14,7 +14,7 @@ using namespace DirectX;
 
 Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playTime(0), m_fxFactory(nullptr), m_states(nullptr)
 {
-	//Create DirectXTK spritebatch stuff
+	//Create DirectXTK spritebatch
 	ID3D11DeviceContext* pd3dImmediateContext;
 	_pd3dDevice->GetImmediateContext(&pd3dImmediateContext);
 	m_DD2D = new DrawData2D();
@@ -24,7 +24,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	//seed the random number generator
 	srand((UINT)time(NULL));	
 
-	//Direct Input Stuff
+	//Direct Input
 	m_hWnd = _hWnd;
 	m_pKeyboard = nullptr;
 	m_pDirectInput = nullptr;
@@ -52,7 +52,7 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	//set up DirectXTK Effects system
 	m_fxFactory = new EffectFactory(_pd3dDevice);
 
-	//Tell the fxFactory to look to the correct build directory to pull stuff in from
+	//Tell the fxFactory to look to the correct build directory to pull in from
 #ifdef DEBUG
 	((EffectFactory*)m_fxFactory)->SetDirectory(L"../Debug");
 #else
@@ -100,10 +100,6 @@ Game::Game(ID3D11Device* _pd3dDevice, HWND _hWnd, HINSTANCE _hInstance) :m_playT
 	m_cam->SetPos(Vector3(0.0f, 150, 400));
 	m_GameObjects.push_back(m_cam);
 
-	//add a secondary camera
-	m_TPScam = new TPSCamera(0.25f * XM_PI, AR, 1.0f, 10000.0f, m_plane, Vector3::UnitY, Vector3(0.0f, 10.0f, 50.0f));
-	m_GameObjects.push_back(m_TPScam);
-
 	m_GD->m_clickState = IMPRINT;
 	m_GD->m_displyState = HEIGHT;
 }
@@ -117,7 +113,7 @@ Game::~Game()
 	//tidy up VBGO render system
 	VBGO::CleanUp();
 
-	//tidy away Direct Input Stuff
+	//tidy away Direct Input
 	if (m_pKeyboard)
 	{
 		m_pKeyboard->Unacquire();
@@ -166,19 +162,6 @@ bool Game::Update()
 		return false;
 	}
 
-	//upon space bar switch camera state
-	if ((m_keyboardState[DIK_SPACE] & 0x80) && !(m_prevKeyboardState[DIK_SPACE] & 0x80))
-	{
-		if (m_GD->m_GS == GS_PLAY_MAIN_CAM)
-		{
-			m_GD->m_GS = GS_PLAY_TPS_CAM;
-		}
-		else
-		{
-			m_GD->m_GS = GS_PLAY_MAIN_CAM;
-		}
-	}
-
 	// For demonstration input purposes
 	handleDemoInput();
 
@@ -199,7 +182,6 @@ bool Game::Update()
 
 	RECT window;
 	GetWindowRect(m_hWnd, &window);
-	SetCursorPos(0.5*(window.left + window.right), 0.5*(window.bottom + window.top));
 	return true;
 }
 
@@ -246,10 +228,6 @@ void Game::Render(ID3D11DeviceContext* _pd3dImmediateContext)
 
 	//set which camera to be used
 	m_DD->m_cam = m_cam;
-	if (m_GD->m_GS == GS_PLAY_TPS_CAM)
-	{
-		m_DD->m_cam = m_TPScam;
-	}
 
 	//update the constant buffer for the rendering of VBGOs
 	VBGO::UpdateConstantBuffer(m_DD);
@@ -262,7 +240,7 @@ void Game::Render(ID3D11DeviceContext* _pd3dImmediateContext)
 
 	m_plane->DrawTerrainElements(m_DD2D, m_GD);
 
-	// Draw sprite batch stuff 
+	// Draw sprite batch 
 	m_DD2D->m_Sprites->Begin();
 	for (list<GameObject2D *>::iterator it = m_GameObject2Ds.begin(); it != m_GameObject2Ds.end(); it++)
 	{
@@ -270,7 +248,7 @@ void Game::Render(ID3D11DeviceContext* _pd3dImmediateContext)
 	}
 	m_DD2D->m_Sprites->End();
 
-	//drawing text screws up the Depth Stencil State, this puts it back again!
+	//repair stencil state
 	_pd3dImmediateContext->OMSetDepthStencilState(m_states->DepthDefault(), 0);
 }
 

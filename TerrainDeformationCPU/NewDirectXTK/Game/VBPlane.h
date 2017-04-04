@@ -25,10 +25,10 @@ public:
 
 	struct DeformStencil {      
 		ID3D11ShaderResourceView* texture;
+		Vector2 textureSize;
 		Vector2 position;
 		float scale;
 		float yRotation;
-		float depth;
 		Color colour;
 	};
 
@@ -42,24 +42,23 @@ public:
 	void updateVerts(GameData* _GD);
 
 	Color levelSurfaceForStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale);
-	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _toLevel, bool _toRaise);
+	void makeStencil(ID3D11ShaderResourceView* _texture, Vector2 _position, float _scale, float _yRotation, float _depth, bool _levelSurface, bool _toRaise);
 
 	bool loadHeightMap(char* filename, HeightMapInfo &hminfo);
 
 	bool verticesUpdated = true;
 
 protected:
-	//this is to allow custom versions of this which create the basic Plane and then distort it
-	//see VBSpiral, VBSpiked and VBPillow
 	virtual void Transform(){};
 
 	int m_width;
 	int m_height;
 
 	ID3D11ShaderResourceView* m_heightMap;
+
+	// temporary demo input textures
 	ID3D11ShaderResourceView* m_circleTex;
 	ID3D11ShaderResourceView* m_footPrint;
-	Vector2 m_circleSize;
 
 	std::vector<DeformStencil> m_stencils;
 	std::vector<DeformStencil> m_stencilsToLevel;

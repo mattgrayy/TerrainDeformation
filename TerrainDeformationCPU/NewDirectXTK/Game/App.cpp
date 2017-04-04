@@ -53,10 +53,10 @@ HRESULT App::InitWindow( HINSTANCE _hInstance, int _nCmdShow )
     // Create window
     m_hInst = _hInstance;
 #ifdef DEBUG
-    RECT rc = { 0, 0, 800, 600 };
+    RECT rc = { 0, 0, 1920, 1080 };
     AdjustWindowRect( &rc, WS_OVERLAPPEDWINDOW, FALSE );
     m_hWnd = CreateWindow( L"TerrainDeformation", L"TerrainDeformation", WS_OVERLAPPEDWINDOW,
-                           600, 100, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, _hInstance,
+                           0, 0, rc.right - rc.left, rc.bottom - rc.top, nullptr, nullptr, _hInstance,
                            nullptr );
 #else
 	int SCREEN_WIDTH = 1440;
